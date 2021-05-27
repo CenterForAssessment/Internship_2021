@@ -1,0 +1,17 @@
+---
+title: "Shower Presentations with R Markdown"
+author: Allie Cooperman
+output:
+  rmdshower::shower_presentation:
+    self_contained: false
+    katex: true
+    ratio: 16x10
+---
+
+## Shower Presentations with R Markdown { .white }
+
+<img src="scifi.jpg" class="cover">
+
+<p class="white">
+Get it from GitHub: https://github.com/mangothecat/rmdshower.
+</p>

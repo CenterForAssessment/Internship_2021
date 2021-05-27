@@ -1,0 +1,17 @@
+---
+title: "May 2021 Release Notes"
+date: "May 25th, 2021"
+---
+
+```{r, echo = FALSE}
+is_html_output = function() {
+  knitr::opts_knit$get("rmarkdown.pandoc.to")=="html"
+}
+knitr::opts_chunk$set(collapse = TRUE, comment = "", prompt=TRUE, fig.dpi = 96)
+if (is_html_output()) {
+    options(width=1000)
+}
+```
+
+
+These are the inital release notes for Allie Cooperman's Internship Repo.

@@ -1,0 +1,48 @@
+DESCRIPTION:
+  Package: Internship 2021
+  Title: Content created by Allie Cooperman as part of NCIEA Internship 2021 
+  Authors@R: c(person(given=c("Allie"), family="Cooperman", email="coope782@umn.edu", role=c("aut", "cre")),
+           person(given=c("Damian", "W."), family="Betebenner", email="dbetebenner@nciea.org", role="aut"))
+  License: GPL-3
+  BugReports: https://github.com/CenterForAssessment/Internship_2021/issues
+
+template:
+  package: centerProjectTemplate
+  default_assets: false
+
+
+home:
+  strip_header: true
+  links:
+    - text: Other state repos
+      href: https://centerforassessment.github.io/
+
+
+navbar:
+    title: ~
+    type: default
+    left:
+    - text: Articles
+      menu:
+      - text: "An Article"
+        href: articles/article_1.html
+      - text: "Another Article"
+        href: articles/article_2.html
+    - text: Presentations
+      menu:
+      - text: "First Update Presentation"
+        href: articles/first_update_presentation.html
+    - text: News
+      menu:
+      - text: "Internship notes"
+      - text: "First Update"
+        href: articles/releases/First_Update_Notes.html
+      - text: "Second Update"
+        href: articles/releases/Second_Update_Notes.html
+      - text: "Final Update"
+        href: articles/releases/Final_Update_Notes.html
+    right:
+      - icon: fab fa-github fa-2x
+        href: https://github.com/centerforassessment/Internship_2021
+      - icon: fab fa-twitter
+        href: https://twitter.com/intent/tweet?url=https%3A%2F%2Fcenterforassessment.github.io%2FInternship_2021%2F&via=NCIEA1&text=Content%20for%20Center%20for%20Assessment%20Internship%202021&hashtags=rstats%2CSGP
