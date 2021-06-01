@@ -9,10 +9,12 @@ output:
     toc_depth: 1
 ---
 
-# Description
+# June 4th, 2021. Presentation Slides for Internship Update 
 
-# Presentation Slides
+The presentation contains initial work on missing data imputation associated with calculating aggregate school level statistics due to pandemic realted missing student data ... 
 
-[June 4 Presentation Slides](https://centerforassessment.github.io/Internship_2021/articles/first_update_presentation.html)
+* [June 4 Presentation Slides](https://centerforassessment.github.io/Internship_2021/articles/first_update_presentation.html)
+* <a href="http://mangothecat.github.io/rmdshower/skeleton.html" target="_blank">Opens up another window</a>
+* <a href="https://wiki.lyx.org/uploads/Examples/Beamer/Drewes/thesispres.pdf" target="_blank">PDF of presentation (not really)</a>
 
 
