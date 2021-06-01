@@ -26,15 +26,13 @@ navbar:
       menu:
       - text: "Practice Vignette"
         href: articles/practice_vignette.html
-      - text: "Another Article"
-        href: articles/article_2.html
     - text: Source Code
       menu:
       - text: "Example R Code"
     - text: Presentations
       menu:
       - text: "First Update Presentation"
-        href: articles/first_update_presentation.html
+        href: articles/update_presentation_landing_page_1.html
     - text: News
       menu:
       - text: "Internship notes"

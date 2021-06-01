@@ -2,7 +2,10 @@
 title: "CFA Internship Presentation"
 author: "Allie Cooperman"
 date: "June 4, 2021"
-output: ioslides_presentation
+output: 
+  ioslides_presentation:
+    widescreen: true
+    smaller: true
 ---
 
 ```{r setup, include=FALSE}
@@ -11,4 +14,12 @@ knitr::opts_chunk$set(echo = FALSE)
 
 ## Slide 1
 
+- Slide 1 text
+- Additional text
+
+----
+
 ## Slide 2
+
+- Slide 1 text
+- Additional text
