@@ -1,0 +1,18 @@
+---
+title: "Internship Update Presentation"
+author: "Allie Cooperman"
+date: "June 4, 2021"
+output: 
+  bookdown::html_document2: 
+    toc: true
+    toc_float: true
+    toc_depth: 1
+---
+
+# Description
+
+# Presentation Slides
+
+[June 4 Presentation Slides](https://centerforassessment.github.io/Internship_2021/articles/first_update_presentation.html)
+
+
