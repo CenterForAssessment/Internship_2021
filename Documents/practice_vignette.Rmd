@@ -1,0 +1,25 @@
+---
+title: "Practice Vignette"
+author: "Allie Cooperman"
+date: "5/31/2021"
+output: 
+  bookdown::html_document2: 
+    toc: true
+    toc_float: true
+    toc_depth: 1
+---
+
+# Section 1
+
+## Random Data Plot
+
+```{r echo = FALSE}
+# Create data
+set.seed(53121)
+x = rnorm(100); y = rnorm(100)
+
+# Plot
+plot(x, y, main = "Random Data")
+```
+
+
