@@ -31,8 +31,8 @@ navbar:
       - text: "Example R Code"
     - text: Presentations
       menu:
-      - text: "First Update Presentation"
-        href: articles/update_presentation_landing_page_1.html
+      - text: "Internship Presentations"
+        href: articles/Internship_Presentation_Landing_Page.html
     - text: News
       menu:
       - text: "Internship notes"
