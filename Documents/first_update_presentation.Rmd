@@ -1,17 +1,14 @@
 ---
-title: "Shower Presentations with R Markdown"
-author: Allie Cooperman
-output:
-  rmdshower::shower_presentation:
-    self_contained: false
-    katex: true
-    ratio: 16x10
+title: "CFA Internship Presentation"
+author: "Allie Cooperman"
+date: "June 4, 2021"
+output: ioslides_presentation
 ---
 
-## Shower Presentations with R Markdown { .white }
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+```
 
-<img src="scifi.jpg" class="cover">
+## Slide 1
 
-<p class="white">
-Get it from GitHub: https://github.com/mangothecat/rmdshower.
-</p>
+## Slide 2
