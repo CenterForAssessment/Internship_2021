@@ -15,6 +15,6 @@ The presentation contains initial work on missing data imputation associated wit
 
 * [June 4 Presentation Slides](https://centerforassessment.github.io/Internship_2021/articles/first_update_presentation.html)
 * <a href="http://mangothecat.github.io/rmdshower/skeleton.html" target="_blank">Opens up another window</a>
-* <a href="https://wiki.lyx.org/uploads/Examples/Beamer/Drewes/thesispres.pdf" target="_blank">PDF of presentation (not really)</a>
+* <a href="https://centerforassessment.github.io/Internship_2021/articles/NCME_SGP_Training_Session_Presentation_040711.pdf" target="_blank">PDF of presentation (not really)</a>
 
 
