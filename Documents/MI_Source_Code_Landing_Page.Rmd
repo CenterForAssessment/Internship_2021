@@ -19,7 +19,7 @@ The following .Rmd files can be rendered together to create an HTML report for a
 
 # Comparison Summary
 
-Coming soon!
+* [MI Summary Source Code](https://centerforassessment.github.io/Internship_2021/articles/MI_Summary_Source_Code.html)
 
 # Markdown and R Resources
 
