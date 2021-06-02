@@ -1,0 +1,1133 @@
+---
+title: "Source Code for Multiple Imputation Comparisons: Summary Vignette"
+author: "Allie Cooperman, Adam Van Iwaarden, and Damian Betebenner"
+date: "`r format(Sys.time(), '%B %d, %Y')`"
+output: html_document
+params: 
+    printcode: TRUE
+    evalcode: FALSE
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(cache   = FALSE, 
+                      eval    = params$evalcode,
+                      echo    = params$printcode, 
+                      message = FALSE, 
+                      warning = FALSE,
+                      fig.align = "center") 
+```
+
+The code below can be used to recreate the tables and figures in the multiple imputation (MI) comparison summary vignette.
+
+
+````md
+
+---
+title: "Evaluating the Efficacy of Multiple Imputation Methods for Missing Educational Assessment and Growth Data"
+author: "Allie Cooperman"
+date: "`r "\u0060r format(Sys.time(), '%B %d, %Y')\u0060"`"
+output: 
+  bookdown::html_document2: 
+    toc: true
+    toc_float: true
+    toc_depth: 1
+---
+
+```{r setup, include = FALSE}`r ''`
+knitr::opts_chunk$set(cache   = FALSE, 
+                      eval    = params$evalcode,
+                      echo    = params$printcode, 
+                      message = FALSE, 
+                      warning = FALSE,
+                      fig.align = "center") 
+
+# Set working directory
+setwd("./FilePath")
+
+# kable options
+options(knitr.kable.NA = '')
+
+# Load R libraries
+require(pacman)
+pacman::p_load(kableExtra, ggplot2, glmnet, data.table, fixest)
+
+# Source F-test fix function
+source("/fixFtest.R")
+
+# Set data directory
+datadir = "./DataPath"
+
+# Missingness percentages
+missperc = c(30, 50, 70)
+
+# Missingness types
+misstype = c("MCAR", "STATUS_w_DEMOG", "STATUS_w_GROWTH")
+
+# For-loop to create full data tables
+MIsummary.GC = MIsummary.School =  NULL
+for(mp in missperc) {
+  
+  for(mt in misstype) {
+    
+    # Create file path
+    fp = paste0(datadir, "/", mp, " Percent Missing/", mt, "/")
+    
+    # Load summary data
+    load(paste0(fp, "L2PAN_Summaries.rda"))
+    load(paste0(fp, "L2PAN_LONG_Summaries.rda"))
+    load(paste0(fp, "L2LMER_Summaries.rda"))
+    load(paste0(fp, "L2LMER_LONG_Summaries.rda"))
+    load(paste0(fp, "PMM_Summaries.rda"))
+    load(paste0(fp, "RQ_Summaries.rda"))
+    
+    # Apply F test fix
+    for(f in as.list("L2PAN_Summaries.rda", "L2PAN_LONG_Summaries.rda",
+                     "L2LMER_Summaries.rda", "L2LMER_LONG_Summaries.rda",
+                     "PMM_Summaries.rda", "RQ_Summaries.rda")) {
+
+      assign(gsub(".rda", "", f), fixFtest(get(gsub(".rda", "", f))))
+
+    }
+    
+    # Create "observed" cases
+    Observed.GC = copy(PMM_Summaries[["SCHOOL"]][["GRADE_CONTENT"]][["Evaluation"]])[, IMP_METHOD := "Observed"]
+    Observed.GC[, SS_Raw_Bias := SS_Obs_Raw_Bias]
+    Observed.GC[, SGP_Raw_Bias := SGP_Obs_Raw_Bias]
+    Observed.GC[, SGPB_Raw_Bias := SGPB_Obs_Raw_Bias]
+    
+    Observed.School = copy(PMM_Summaries[["SCHOOL"]][["GLOBAL"]][["Evaluation"]])[, IMP_METHOD := "Observed"]
+    Observed.School[, SS_Raw_Bias := SS_Obs_Raw_Bias]
+    Observed.School[, SGP_Raw_Bias := SGP_Obs_Raw_Bias]
+    Observed.School[, SGPB_Raw_Bias := SGPB_Obs_Raw_Bias]
+    
+    # Create long data.table combining imputation methods 
+    # By grade/content area
+    data.temp.gc = rbindlist(list(
+      
+      # L2PAN
+      data.table(L2PAN_Summaries$SCHOOL$GRADE_CONTENT$Evaluation, "IMP_METHOD" = "L2PAN"),
+      
+      # L2PAN LONG
+      data.table(L2PAN_LONG_Summaries$SCHOOL$GRADE_CONTENT$Evaluation, "IMP_METHOD" = "L2PAN_LONG"),
+      
+       # L2LMER
+      data.table(L2LMER_Summaries$SCHOOL$GRADE_CONTENT$Evaluation, "IMP_METHOD" = "L2LMER"),
+      
+      # L2LMER LONG
+      data.table(L2LMER_LONG_Summaries$SCHOOL$GRADE_CONTENT$Evaluation, "IMP_METHOD" = "L2LMER_LONG"),
+      
+      # PMM
+      data.table(PMM_Summaries$SCHOOL$GRADE_CONTENT$Evaluation, "IMP_METHOD" = "PMM"),
+      
+      # RQ
+      data.table(RQ_Summaries$SCHOOL$GRADE_CONTENT$Evaluation, "IMP_METHOD" = "RQ"),
+      
+      # Observed
+      data.table(Observed.GC))
+  
+      )
+    
+    # Convert imputation method, grade, and content area variables to class "factor"
+    data.temp.gc[, IMP_METHOD := factor(IMP_METHOD, 
+                   levels = rev(c("Observed", "PMM", "RQ", "L2PAN", "L2LMER", "L2PAN_LONG", "L2LMER_LONG")))]
+    data.temp.gc[, GRADE := as.factor(GRADE)]
+    data.temp.gc[, CONTENT_AREA := as.factor(CONTENT_AREA)]
+    
+    # Create missingness type and percentage variables
+    data.temp.gc[, MISS_TYPE := mt]
+    data.temp.gc[, MISS_PERC := mp]
+    
+    # Combine with previous data
+    MIsummary.GC = rbind(MIsummary.GC, data.temp.gc)
+    
+    # Create long data.table combining imputation methods 
+    # By school
+    data.temp.sc = rbindlist(list(
+      
+      # L2PAN
+      data.table(L2PAN_Summaries$SCHOOL$GLOBAL$Evaluation, "IMP_METHOD" = "L2PAN"),
+      
+      # L2PAN LONG
+      data.table(L2PAN_LONG_Summaries$SCHOOL$GLOBAL$Evaluation, "IMP_METHOD" = "L2PAN_LONG"),
+      
+       # L2LMER
+      data.table(L2LMER_Summaries$SCHOOL$GLOBAL$Evaluation, "IMP_METHOD" = "L2LMER"),
+      
+      # L2LMER LONG
+      data.table(L2LMER_LONG_Summaries$SCHOOL$GLOBAL$Evaluation, "IMP_METHOD" = "L2LMER_LONG"),
+      
+      # PMM
+      data.table(PMM_Summaries$SCHOOL$GLOBAL$Evaluation, "IMP_METHOD" = "PMM"),
+      
+      # RQ
+      data.table(RQ_Summaries$SCHOOL$GLOBAL$Evaluation, "IMP_METHOD" = "RQ"),
+      
+      # Observed
+      data.table(Observed.School))
+  
+      )
+    
+    # Convert imputation method, grade, and content area variables to class "factor"
+    data.temp.sc[, IMP_METHOD := factor(IMP_METHOD, 
+                   levels = rev(c("Observed", "PMM", "RQ", "L2PAN", "L2LMER", "L2PAN_LONG", "L2LMER_LONG")))]
+    
+    # Create missingness type and percentage variables
+    data.temp.sc[, MISS_TYPE := mt]
+    data.temp.sc[, MISS_PERC := mp]
+    
+    # Combine with previous data
+    MIsummary.School = rbind(MIsummary.School, data.temp.sc)
+        
+  } # end for mt in misstype
+  
+} # end for mp in missperc
+
+# Convert missing type and percentage to factor variables
+MIsummary.GC[, MISS_TYPE := as.factor(MISS_TYPE)]
+MIsummary.GC[, MISS_PERC := as.factor(MISS_PERC)]
+MIsummary.School[, MISS_TYPE := as.factor(MISS_TYPE)]
+MIsummary.School[, MISS_PERC := as.factor(MISS_PERC)]
+
+# Create classification variables based on the F1 (simplified) p-value
+alphaval = 0.1
+MIsummary.GC[, SS_F1_pSimp_Class := ifelse(SS_F1_pSimp < alphaval, 1, 0)]
+MIsummary.GC[, SGP_F1_pSimp_Class := ifelse(SGP_F1_pSimp < alphaval, 1, 0)]
+MIsummary.School[, SS_F1_pSimp_Class := ifelse(SS_F1_pSimp < alphaval, 1, 0)]
+MIsummary.School[, SGP_F1_pSimp_Class := ifelse(SGP_F1_pSimp < alphaval, 1, 0)]
+
+# Create factor variable grouping observations into quantile of grade/content area size
+MIsummary.GC[, N_QUANT := cut(N, breaks = c(quantile(N, seq(0, 1, by = 0.25))),
+                                                     labels = c("1", "2", "3", "4"),
+                                                     include.lowest = T)]
+MIsummary.School[, N_QUANT := cut(N, breaks = c(quantile(N, seq(0, 1, by = 0.25))),
+                                                         labels = c("1", "2", "3", "4"),
+                                                         include.lowest = T)]
+
+# Remove observations with N < 10
+MIsummary.GC = MIsummary.GC[N >= 10]
+MIsummary.School = MIsummary.School[N >= 10]
+setkey(MIsummary.GC, IMP_METHOD); setkey(MIsummary.School, IMP_METHOD)
+```
+
+# Imputation Method Comparison
+
+## Summary Tables {.tabset}
+
+### GC: MCAR
+
+```{r}`r ''``r ''`
+# Summary by imputation method, grade, and missingness percentage
+cbind(
+  
+  MIsummary.GC[IMP_METHOD == "L2PAN" & MISS_TYPE == "MCAR",
+            .("mean_pb_ss" = mean(SS_Pct_Bias, na.rm = T),
+              "mean_pb_sgp" = mean(SGP_Pct_Bias, na.rm = T),
+              "mean_cr_ss" = mean(SS_Coverage_Simp, na.rm = T),
+              "mean_cr_sgp" = mean(SGP_Coverage_Simp, na.rm = T)),
+            keyby = .(MISS_PERC, GRADE)][,-1],
+  MIsummary.GC[IMP_METHOD == "L2PAN_LONG" & MISS_TYPE == "MCAR",
+            .("mean_pb_ss" = mean(SS_Pct_Bias, na.rm = T),
+              "mean_pb_sgp" = mean(SGP_Pct_Bias, na.rm = T),
+              "mean_cr_ss" = mean(SS_Coverage_Simp, na.rm = T),
+              "mean_cr_sgp" = mean(SGP_Coverage_Simp, na.rm = T)),
+            keyby = .(MISS_PERC, GRADE)][,3:6],
+  MIsummary.GC[IMP_METHOD == "L2LMER" & MISS_TYPE == "MCAR",
+            .("mean_pb_ss" = mean(SS_Pct_Bias, na.rm = T),
+              "mean_pb_sgp" = mean(SGP_Pct_Bias, na.rm = T),
+              "mean_cr_ss" = mean(SS_Coverage_Simp, na.rm = T),
+              "mean_cr_sgp" = mean(SGP_Coverage_Simp, na.rm = T)),
+            keyby = .(MISS_PERC, GRADE)][,3:6],
+  MIsummary.GC[IMP_METHOD == "L2LMER_LONG" & MISS_TYPE == "MCAR",
+            .("mean_pb_ss" = mean(SS_Pct_Bias, na.rm = T),
+              "mean_pb_sgp" = mean(SGP_Pct_Bias, na.rm = T),
+              "mean_cr_ss" = mean(SS_Coverage_Simp, na.rm = T),
+              "mean_cr_sgp" = mean(SGP_Coverage_Simp, na.rm = T)),
+            keyby = .(MISS_PERC, GRADE)][,3:6],
+  MIsummary.GC[IMP_METHOD == "PMM" & MISS_TYPE == "MCAR",
+            .("mean_pb_ss" = mean(SS_Pct_Bias, na.rm = T),
+              "mean_pb_sgp" = mean(SGP_Pct_Bias, na.rm = T),
+              "mean_cr_ss" = mean(SS_Coverage_Simp, na.rm = T),
+              "mean_cr_sgp" = mean(SGP_Coverage_Simp, na.rm = T)),
+            keyby = .(MISS_PERC, GRADE)][,3:6],
+  MIsummary.GC[IMP_METHOD == "RQ" & MISS_TYPE == "MCAR",
+            .("mean_pb_ss" = mean(SS_Pct_Bias, na.rm = T),
+              "mean_pb_sgp" = mean(SGP_Pct_Bias, na.rm = T),
+              "mean_cr_ss" = mean(SS_Coverage_Simp, na.rm = T),
+              "mean_cr_sgp" = mean(SGP_Coverage_Simp, na.rm = T)),
+            keyby = .(MISS_PERC, GRADE)][,3:6],
+  MIsummary.GC[IMP_METHOD == "Observed" & MISS_TYPE == "MCAR",
+            .("mean_pb_ss" = mean(SS_Pct_Bias, na.rm = T),
+              "mean_pb_sgp" = mean(SGP_Pct_Bias, na.rm = T),
+              "mean_cr_ss" = mean(SS_Coverage_Simp, na.rm = T),
+              "mean_cr_sgp" = mean(SGP_Coverage_Simp, na.rm = T)),
+            keyby = .(MISS_PERC, GRADE)][,3:6]
+  
+) %>%
+  kable(format = "html", digits = 3, booktabs = T,
+        col.names = c("Grade", rep(c("SS", "SGP"), 14)),
+        caption = "Mean percent bias and confidence interval coverage rates for scale score (SS) and student growth percentiles (SGPs) with MCAR data, grade-content area level") %>%
+  kable_classic_2("hover", full_width = F) %>%
+  pack_rows("30% Missing", 1, 6) %>%
+  pack_rows("50% Missing", 7, 12) %>%
+  pack_rows("70% Missing", 13, 18) %>%
+  add_header_above(c(" ", "Percent Bias" = 2, "CR" = 2, "Percent Bias" = 2, "CR" = 2,
+                   "Percent Bias" = 2, "CR" = 2, "Percent Bias" = 2, "CR" = 2, 
+                   "Percent Bias" = 2, "CR" = 2, "Percent Bias" = 2, "CR" = 2,
+                   "Percent Bias" = 2, "CR" = 2)) %>%
+  add_header_above(c(" ", "L2PAN" = 4, "L2PAN_LONG" = 4, "LMER" = 4, "LMER_LONG" = 4, "PMM" = 4, "RQ" = 4, "Observed" = 4)) %>%
+  scroll_box(width = "900px")
+```
+
+### GC: Status with Demographics
+
+```{r}`r ''``r ''`
+# Summary by imputation method, grade, and missingness percentage
+cbind(
+  
+  MIsummary.GC[IMP_METHOD == "L2PAN" & MISS_TYPE == "STATUS_w_DEMOG",
+            .("mean_pb_ss" = mean(SS_Pct_Bias, na.rm = T),
+              "mean_pb_sgp" = mean(SGP_Pct_Bias, na.rm = T),
+              "mean_cr_ss" = mean(SS_Coverage_Simp, na.rm = T),
+              "mean_cr_sgp" = mean(SGP_Coverage_Simp, na.rm = T)),
+            keyby = .(MISS_PERC, GRADE)][,-1],
+  MIsummary.GC[IMP_METHOD == "L2PAN_LONG" & MISS_TYPE == "STATUS_w_DEMOG",
+            .("mean_pb_ss" = mean(SS_Pct_Bias, na.rm = T),
+              "mean_pb_sgp" = mean(SGP_Pct_Bias, na.rm = T),
+              "mean_cr_ss" = mean(SS_Coverage_Simp, na.rm = T),
+              "mean_cr_sgp" = mean(SGP_Coverage_Simp, na.rm = T)),
+            keyby = .(MISS_PERC, GRADE)][,3:6],
+  MIsummary.GC[IMP_METHOD == "L2LMER" & MISS_TYPE == "STATUS_w_DEMOG",
+            .("mean_pb_ss" = mean(SS_Pct_Bias, na.rm = T),
+              "mean_pb_sgp" = mean(SGP_Pct_Bias, na.rm = T),
+              "mean_cr_ss" = mean(SS_Coverage_Simp, na.rm = T),
+              "mean_cr_sgp" = mean(SGP_Coverage_Simp, na.rm = T)),
+            keyby = .(MISS_PERC, GRADE)][,3:6],
+  MIsummary.GC[IMP_METHOD == "L2LMER_LONG" & MISS_TYPE == "STATUS_w_DEMOG",
+            .("mean_pb_ss" = mean(SS_Pct_Bias, na.rm = T),
+              "mean_pb_sgp" = mean(SGP_Pct_Bias, na.rm = T),
+              "mean_cr_ss" = mean(SS_Coverage_Simp, na.rm = T),
+              "mean_cr_sgp" = mean(SGP_Coverage_Simp, na.rm = T)),
+            keyby = .(MISS_PERC, GRADE)][,3:6],
+  MIsummary.GC[IMP_METHOD == "PMM" & MISS_TYPE == "STATUS_w_DEMOG",
+            .("mean_pb_ss" = mean(SS_Pct_Bias, na.rm = T),
+              "mean_pb_sgp" = mean(SGP_Pct_Bias, na.rm = T),
+              "mean_cr_ss" = mean(SS_Coverage_Simp, na.rm = T),
+              "mean_cr_sgp" = mean(SGP_Coverage_Simp, na.rm = T)),
+            keyby = .(MISS_PERC, GRADE)][,3:6],
+  MIsummary.GC[IMP_METHOD == "RQ" & MISS_TYPE == "STATUS_w_DEMOG",
+            .("mean_pb_ss" = mean(SS_Pct_Bias, na.rm = T),
+              "mean_pb_sgp" = mean(SGP_Pct_Bias, na.rm = T),
+              "mean_cr_ss" = mean(SS_Coverage_Simp, na.rm = T),
+              "mean_cr_sgp" = mean(SGP_Coverage_Simp, na.rm = T)),
+            keyby = .(MISS_PERC, GRADE)][,3:6],
+   MIsummary.GC[IMP_METHOD == "Observed" & MISS_TYPE == "STATUS_w_DEMOG",
+            .("mean_pb_ss" = mean(SS_Pct_Bias, na.rm = T),
+              "mean_pb_sgp" = mean(SGP_Pct_Bias, na.rm = T),
+              "mean_cr_ss" = mean(SS_Coverage_Simp, na.rm = T),
+              "mean_cr_sgp" = mean(SGP_Coverage_Simp, na.rm = T)),
+            keyby = .(MISS_PERC, GRADE)][,3:6]
+  
+) %>%
+  kable(format = "html", digits = 3, booktabs = T,
+        col.names = c("Grade", rep(c("SS", "SGP"), 14)),
+        caption = "Mean percent bias and confidence interval coverage rates for scale score (SS) and student growth percentiles (SGPs) with MAR data (using status with demographics), grade-content area level") %>%
+  kable_classic_2("hover", full_width = F) %>%
+  pack_rows("30% Missing", 1, 6) %>%
+  pack_rows("50% Missing", 7, 12) %>%
+  pack_rows("70% Missing", 13, 18) %>%
+  add_header_above(c(" ", "Percent Bias" = 2, "CR" = 2, "Percent Bias" = 2, "CR" = 2,
+                   "Percent Bias" = 2, "CR" = 2, "Percent Bias" = 2, "CR" = 2, 
+                   "Percent Bias" = 2, "CR" = 2, "Percent Bias" = 2, "CR" = 2,
+                   "Percent Bias" = 2, "CR" = 2)) %>%
+  add_header_above(c(" ", "L2PAN" = 4, "L2PAN_LONG" = 4, "LMER" = 4, "LMER_LONG" = 4, "PMM" = 4, "RQ" = 4, "Observed" = 4))  %>%
+  scroll_box(width = "900px")
+```
+
+### GC: Status with Growth
+
+```{r}`r ''``r ''`
+# Summary by imputation method, grade, and missingness percentage
+cbind(
+  
+  MIsummary.GC[IMP_METHOD == "L2PAN" & MISS_TYPE == "STATUS_w_GROWTH",
+            .("mean_pb_ss" = mean(SS_Pct_Bias, na.rm = T),
+              "mean_pb_sgp" = mean(SGP_Pct_Bias, na.rm = T),
+              "mean_cr_ss" = mean(SS_Coverage_Simp, na.rm = T),
+              "mean_cr_sgp" = mean(SGP_Coverage_Simp, na.rm = T)),
+            keyby = .(MISS_PERC, GRADE)][,-1],
+  MIsummary.GC[IMP_METHOD == "L2PAN_LONG" & MISS_TYPE == "STATUS_w_GROWTH",
+            .("mean_pb_ss" = mean(SS_Pct_Bias, na.rm = T),
+              "mean_pb_sgp" = mean(SGP_Pct_Bias, na.rm = T),
+              "mean_cr_ss" = mean(SS_Coverage_Simp, na.rm = T),
+              "mean_cr_sgp" = mean(SGP_Coverage_Simp, na.rm = T)),
+            keyby = .(MISS_PERC, GRADE)][,3:6],
+  MIsummary.GC[IMP_METHOD == "L2LMER" & MISS_TYPE == "STATUS_w_GROWTH",
+            .("mean_pb_ss" = mean(SS_Pct_Bias, na.rm = T),
+              "mean_pb_sgp" = mean(SGP_Pct_Bias, na.rm = T),
+              "mean_cr_ss" = mean(SS_Coverage_Simp, na.rm = T),
+              "mean_cr_sgp" = mean(SGP_Coverage_Simp, na.rm = T)),
+            keyby = .(MISS_PERC, GRADE)][,3:6],
+  MIsummary.GC[IMP_METHOD == "L2LMER_LONG" & MISS_TYPE == "STATUS_w_GROWTH",
+            .("mean_pb_ss" = mean(SS_Pct_Bias, na.rm = T),
+              "mean_pb_sgp" = mean(SGP_Pct_Bias, na.rm = T),
+              "mean_cr_ss" = mean(SS_Coverage_Simp, na.rm = T),
+              "mean_cr_sgp" = mean(SGP_Coverage_Simp, na.rm = T)),
+            keyby = .(MISS_PERC, GRADE)][,3:6],
+  MIsummary.GC[IMP_METHOD == "PMM" & MISS_TYPE == "STATUS_w_GROWTH",
+            .("mean_pb_ss" = mean(SS_Pct_Bias, na.rm = T),
+              "mean_pb_sgp" = mean(SGP_Pct_Bias, na.rm = T),
+              "mean_cr_ss" = mean(SS_Coverage_Simp, na.rm = T),
+              "mean_cr_sgp" = mean(SGP_Coverage_Simp, na.rm = T)),
+            keyby = .(MISS_PERC, GRADE)][,3:6],
+  MIsummary.GC[IMP_METHOD == "RQ" & MISS_TYPE == "STATUS_w_GROWTH",
+            .("mean_pb_ss" = mean(SS_Pct_Bias, na.rm = T),
+              "mean_pb_sgp" = mean(SGP_Pct_Bias, na.rm = T),
+              "mean_cr_ss" = mean(SS_Coverage_Simp, na.rm = T),
+              "mean_cr_sgp" = mean(SGP_Coverage_Simp, na.rm = T)),
+            keyby = .(MISS_PERC, GRADE)][,3:6],
+   MIsummary.GC[IMP_METHOD == "Observed" & MISS_TYPE == "STATUS_w_GROWTH",
+            .("mean_pb_ss" = mean(SS_Pct_Bias, na.rm = T),
+              "mean_pb_sgp" = mean(SGP_Pct_Bias, na.rm = T),
+              "mean_cr_ss" = mean(SS_Coverage_Simp, na.rm = T),
+              "mean_cr_sgp" = mean(SGP_Coverage_Simp, na.rm = T)),
+            keyby = .(MISS_PERC, GRADE)][,3:6]
+  
+) %>%
+  kable(format = "html", digits = 3, booktabs = T,
+        col.names = c("Grade", rep(c("SS", "SGP"), 14)),
+        caption = "Mean percent bias and confidence interval coverage rates for scale score (SS) and student growth percentiles (SGPs) with MAR data (using status with growth), grade-content area level") %>%
+  kable_classic_2("hover", full_width = F) %>%
+  pack_rows("30% Missing", 1, 6) %>%
+  pack_rows("50% Missing", 7, 12) %>%
+  pack_rows("70% Missing", 13, 18) %>%
+  add_header_above(c(" ", "Percent Bias" = 2, "CR" = 2, "Percent Bias" = 2, "CR" = 2,
+                   "Percent Bias" = 2, "CR" = 2, "Percent Bias" = 2, "CR" = 2, 
+                   "Percent Bias" = 2, "CR" = 2, "Percent Bias" = 2, "CR" = 2,
+                   "Percent Bias" = 2, "CR" = 2)) %>%
+  add_header_above(c(" ", "L2PAN" = 4, "L2PAN_LONG" = 4, "LMER" = 4, "LMER_LONG" = 4, "PMM" = 4, "RQ" = 4, "Observed" = 4))  %>%
+  scroll_box(width = "900px")
+```
+
+### School Level
+
+```{r}`r ''``r ''`
+# Summary by imputation method, missingness type, and missingness percentage
+cbind(
+  
+  MIsummary.School[IMP_METHOD == "L2PAN",
+            .("mean_pb_ss" = mean(SS_Pct_Bias, na.rm = T),
+              "mean_pb_sgp" = mean(SGP_Pct_Bias, na.rm = T),
+              "mean_cr_ss" = mean(SS_Coverage_Simp, na.rm = T),
+              "mean_cr_sgp" = mean(SGP_Coverage_Simp, na.rm = T)),
+            keyby = .(MISS_TYPE, MISS_PERC)][,-1],
+  MIsummary.School[IMP_METHOD == "L2PAN_LONG",
+            .("mean_pb_ss" = mean(SS_Pct_Bias, na.rm = T),
+              "mean_pb_sgp" = mean(SGP_Pct_Bias, na.rm = T),
+              "mean_cr_ss" = mean(SS_Coverage_Simp, na.rm = T),
+              "mean_cr_sgp" = mean(SGP_Coverage_Simp, na.rm = T)),
+            keyby = .(MISS_TYPE, MISS_PERC)][,3:6],
+  MIsummary.School[IMP_METHOD == "L2LMER",
+            .("mean_pb_ss" = mean(SS_Pct_Bias, na.rm = T),
+              "mean_pb_sgp" = mean(SGP_Pct_Bias, na.rm = T),
+              "mean_cr_ss" = mean(SS_Coverage_Simp, na.rm = T),
+              "mean_cr_sgp" = mean(SGP_Coverage_Simp, na.rm = T)),
+            keyby = .(MISS_TYPE, MISS_PERC)][,3:6],
+  MIsummary.School[IMP_METHOD == "L2LMER_LONG",
+            .("mean_pb_ss" = mean(SS_Pct_Bias, na.rm = T),
+              "mean_pb_sgp" = mean(SGP_Pct_Bias, na.rm = T),
+              "mean_cr_ss" = mean(SS_Coverage_Simp, na.rm = T),
+              "mean_cr_sgp" = mean(SGP_Coverage_Simp, na.rm = T)),
+            keyby = .(MISS_TYPE, MISS_PERC)][,3:6],
+  MIsummary.School[IMP_METHOD == "PMM",
+            .("mean_pb_ss" = mean(SS_Pct_Bias, na.rm = T),
+              "mean_pb_sgp" = mean(SGP_Pct_Bias, na.rm = T),
+              "mean_cr_ss" = mean(SS_Coverage_Simp, na.rm = T),
+              "mean_cr_sgp" = mean(SGP_Coverage_Simp, na.rm = T)),
+            keyby = .(MISS_TYPE, MISS_PERC)][,3:6],
+  MIsummary.School[IMP_METHOD == "RQ",
+            .("mean_pb_ss" = mean(SS_Pct_Bias, na.rm = T),
+              "mean_pb_sgp" = mean(SGP_Pct_Bias, na.rm = T),
+              "mean_cr_ss" = mean(SS_Coverage_Simp, na.rm = T),
+              "mean_cr_sgp" = mean(SGP_Coverage_Simp, na.rm = T)),
+            keyby = .(MISS_TYPE, MISS_PERC)][,3:6],
+  MIsummary.School[IMP_METHOD == "Observed",
+            .("mean_pb_ss" = mean(SS_Pct_Bias, na.rm = T),
+              "mean_pb_sgp" = mean(SGP_Pct_Bias, na.rm = T),
+              "mean_cr_ss" = mean(SS_Coverage_Simp, na.rm = T),
+              "mean_cr_sgp" = mean(SGP_Coverage_Simp, na.rm = T)),
+            keyby = .(MISS_TYPE, MISS_PERC)][,3:6]
+  
+) %>%
+  kable(format = "html", digits = 3, booktabs = T,
+        col.names = c("Percent Missing", rep(c("SS", "SGP"), 14)),
+        caption = "Mean percent bias and confidence interval coverage rates for scale score (SS) and student growth percentiles (SGPs) at the school level") %>%
+  kable_classic_2("hover", full_width = F) %>%
+  pack_rows("MCAR", 1, 3) %>%
+  pack_rows("MAR (Status with Demographics)", 4, 6) %>%
+  pack_rows("MAR (Status with Growth)", 7, 9) %>%
+  add_header_above(c(" ", "Percent Bias" = 2, "CR" = 2, "Percent Bias" = 2, "CR" = 2,
+                   "Percent Bias" = 2, "CR" = 2, "Percent Bias" = 2, "CR" = 2, 
+                   "Percent Bias" = 2, "CR" = 2, "Percent Bias" = 2, "CR" = 2,
+                   "Percent Bias" = 2, "CR" = 2)) %>%
+  add_header_above(c(" ", "L2PAN" = 4, "L2PAN_LONG" = 4, "LMER" = 4, "LMER_LONG" = 4, "PMM" = 4, "RQ" = 4, "Observed" = 4))  %>%
+  scroll_box(width = "900px")
+```
+
+## Summary Figures: Grade/Content Area {.tabset}
+
+### Scale Scores
+
+```{r fig.topcaption=TRUE, fig.cap = "Scale score percent bias by imputation method, missingness percentage, and missingness type"}`r ''`
+# Change factor variable labels
+levels(MIsummary.GC$MISS_PERC) = c("30% Missing", "50% Missing", "70% Missing")
+levels(MIsummary.GC$MISS_TYPE) = c("MCAR", "MAR (Demog)", "MAR (Growth)")
+
+# Faceted box plot, grouping by imputation method
+# Faceting by missing percentage and missingness type
+ggplot(MIsummary.GC, aes(x = IMP_METHOD, y = SS_Pct_Bias, fill = IMP_METHOD)) +
+  geom_boxplot() + coord_flip() +
+  labs(x = "Imputation Method", y = "Percent Bias") +
+  facet_wrap(MISS_PERC ~ MISS_TYPE) + 
+  scale_fill_brewer(palette="Dark2") +
+  theme(legend.position = "none") 
+```
+
+```{r fig.topcaption=TRUE, fig.cap = "Scale score coverage rate by imputation method, missingness percentage, and missingness type"}`r ''`
+# Faceted box plot, grouping by imputation method
+# Faceting by missing percentage and missingness type
+ggplot(MIsummary.GC, aes(x = IMP_METHOD, y = SS_Coverage_Simp, fill = IMP_METHOD)) +
+  geom_boxplot() + coord_flip() +
+  labs(x = "Imputation Method", y = "Simplified CI Coverage Rate") +
+  facet_wrap(MISS_PERC ~ MISS_TYPE) + 
+  scale_fill_brewer(palette="Dark2") +
+  theme(legend.position = "none") 
+```
+
+```{r fig.topcaption=TRUE, fig.cap = "Scatterplot of scale score percent bias as a function of grade/content area size"}`r ''`
+# Scatterplot faceted by imputation method
+MIsummary.GC[order(N)] %>%
+ggplot(aes(x = N, y = SS_Pct_Bias, color = IMP_METHOD)) +
+  geom_point() +
+  labs(x = "Grade/Content Area Size", y = "Percent Bias") +
+  theme(legend.position = "none") +
+  facet_wrap(MISS_TYPE~IMP_METHOD, ncol = 7) +
+  scale_color_brewer(palette="Dark2") +
+  scale_x_continuous(breaks=seq(0, 500, by=250))
+```
+
+```{r fig.topcaption=TRUE, fig.cap = "Scatterplot of scale score coverage rate as a function of grade/content area size"}`r ''`
+# Scatterplot faceted by imputation method
+MIsummary.GC[order(N)] %>%
+ggplot(aes(x = N, y = SS_Coverage_Simp, color = IMP_METHOD)) +
+  geom_point() +
+  labs(x = "Grade/Content Area Size", y = "Simplified CI Coverage Rate") +
+  theme(legend.position = "none") +
+  facet_wrap(MISS_TYPE~IMP_METHOD, ncol = 7) +
+  scale_color_brewer(palette="Dark2") +
+  scale_x_continuous(breaks=seq(0, 500, by=250))
+```
+
+```{r fig.topcaption=TRUE, fig.cap = "Proportion of times that the imputed SS was found to differ from the true value based on the simplified F1 statistic"}`r ''`
+# Bar plot, grouping by imputation method
+# Faceting by missingness type and percentage
+MIsummary.GC[, .("prop_p" = mean(SS_F1_pSimp_Class)), keyby = .(IMP_METHOD, MISS_PERC, MISS_TYPE)] %>%
+ggplot(aes(x = IMP_METHOD, y = prop_p, fill = IMP_METHOD)) +
+  geom_bar(stat = "identity") +
+  theme(legend.position = "none") +
+  facet_wrap(MISS_TYPE~MISS_PERC, ncol = 3) +
+  scale_color_brewer(palette="Dark2") +
+  labs(x = "Imputation Method", y = "Proportion Significant Differences") +
+  theme(axis.text.x = element_text(angle = 90))
+```
+
+### SGPs
+
+```{r fig.topcaption=TRUE, fig.cap = "SGP percent bias by imputation method, missingness percentage, and missingness type"}`r ''`
+# Faceted box plot, grouping by imputation method
+# Faceting by missing percentage and missingness type
+ggplot(MIsummary.GC, aes(x = IMP_METHOD, y = SGP_Pct_Bias, fill = IMP_METHOD)) +
+  geom_boxplot() + coord_flip() +
+  labs(x = "Imputation Method", y = "Percent Bias") +
+  facet_wrap(MISS_PERC ~ MISS_TYPE) + 
+  scale_fill_brewer(palette="Dark2") +
+  theme(legend.position = "none") 
+```
+
+```{r fig.topcaption=TRUE, fig.cap = "SGP coverage rate by imputation method, missingness percentage, and missingness type"}`r ''`
+# Faceted box plot, grouping by imputation method
+# Faceting by missing percentage and missingness type
+ggplot(MIsummary.GC, aes(x = IMP_METHOD, y = SGP_Coverage_Simp, fill = IMP_METHOD)) +
+  geom_boxplot() + coord_flip() +
+  labs(x = "Imputation Method", y = "Simplified CI Coverage Rate") +
+  facet_wrap(MISS_PERC ~ MISS_TYPE) + 
+  scale_fill_brewer(palette="Dark2") +
+  theme(legend.position = "none") 
+```
+
+```{r fig.topcaption=TRUE, fig.cap = "Scatterplot of SGP percent bias as a function of grade/content area size"}`r ''`
+# Scatterplot faceted by imputation method
+MIsummary.GC[order(N)] %>%
+ggplot(aes(x = N, y = SGP_Pct_Bias, color = IMP_METHOD)) +
+  geom_point() +
+  labs(x = "Grade/Content Area Size", y = "Percent Bias") +
+  theme(legend.position = "none") +
+  facet_wrap(MISS_TYPE~IMP_METHOD, ncol = 7) +
+  scale_color_brewer(palette="Dark2") +
+  scale_x_continuous(breaks=seq(0, 500, by=250))
+```
+
+```{r fig.topcaption=TRUE, fig.cap = "Scatterplot of SGP coverage rate as a function of grade/content area size"}`r ''`
+# Scatterplot faceted by imputation method
+MIsummary.GC[order(N)] %>%
+ggplot(aes(x = N, y = SGP_Coverage_Simp, color = IMP_METHOD)) +
+  geom_point() +
+  labs(x = "Grade/Content Area Size", y = "Simplified CI Coverage Rate") +
+  theme(legend.position = "none") +
+  facet_wrap(MISS_TYPE~IMP_METHOD, ncol = 7) +
+  scale_color_brewer(palette="Dark2") +
+  scale_x_continuous(breaks=seq(0, 500, by=250))
+```
+
+```{r fig.topcaption=TRUE, fig.cap = "Proportion of times that the imputed SGP was found to differ from the true value based on the simplified F1 statistic"}`r ''`
+# Bar plot, grouping by imputation method
+# Faceting by missingness type and percentage
+MIsummary.GC[, .("prop_p" = mean(SGP_F1_pSimp_Class, na.rm = T)), keyby = .(IMP_METHOD, MISS_PERC, MISS_TYPE)] %>%
+ggplot(aes(x = IMP_METHOD, y = prop_p, fill = IMP_METHOD)) +
+  geom_bar(stat = "identity") +
+  theme(legend.position = "none") +
+  facet_wrap(MISS_TYPE~MISS_PERC, ncol = 3) +
+  scale_color_brewer(palette="Dark2") +
+  labs(x = "Imputation Method", y = "Proportion Significant Differences") +
+  theme(axis.text.x = element_text(angle = 90))
+```
+
+## Summary Figures: School Level {.tabset}
+
+### Scale Scores
+
+```{r fig.topcaption=TRUE, fig.cap = "Scale score percent bias by imputation method, missingness percentage, and missingness type"}`r ''`
+# Change factor variable labels
+levels(MIsummary.School$MISS_PERC) = c("30% Missing", "50% Missing", "70% Missing")
+levels(MIsummary.School$MISS_TYPE) = c("MCAR", "MAR (Demog)", "MAR (Growth)")
+
+# Faceted box plot, grouping by imputation method
+# Faceting by missing percentage and missingness type
+ggplot(MIsummary.School, aes(x = IMP_METHOD, y = SS_Pct_Bias, fill = IMP_METHOD)) +
+  geom_boxplot() + coord_flip() +
+  labs(x = "Imputation Method", y = "Percent Bias") +
+  facet_wrap(MISS_PERC ~ MISS_TYPE) + 
+  scale_fill_brewer(palette="Dark2") +
+  theme(legend.position = "none") 
+```
+
+```{r fig.topcaption=TRUE, fig.cap = "Scale score coverage rate by imputation method, missingness percentage, and missingness type"}`r ''`
+# Faceted box plot, grouping by imputation method
+# Faceting by missing percentage and missingness type
+ggplot(MIsummary.School, aes(x = IMP_METHOD, y = SS_Coverage_Simp, fill = IMP_METHOD)) +
+  geom_boxplot() + coord_flip() +
+  labs(x = "Imputation Method", y = "Simplified CI Coverage Rate") +
+  facet_wrap(MISS_PERC ~ MISS_TYPE) + 
+  scale_fill_brewer(palette="Dark2") +
+  theme(legend.position = "none") 
+```
+
+```{r fig.topcaption=TRUE, fig.cap = "Scatterplot of scale score percent bias as a function of school size"}`r ''`
+# Scatterplot faceted by imputation method
+MIsummary.School[order(N)] %>%
+ggplot(aes(x = N, y = SS_Pct_Bias, color = IMP_METHOD)) +
+  geom_point() +
+  labs(x = "School Size", y = "Percent Bias") +
+  theme(legend.position = "none") +
+  facet_wrap(MISS_TYPE~IMP_METHOD, ncol = 7) +
+  scale_color_brewer(palette="Dark2") +
+  scale_x_continuous(breaks=seq(0, 3000, by=1000))
+```
+
+```{r fig.topcaption=TRUE, fig.cap = "Scatterplot of scale score coverage rate as a function of school size"}`r ''`
+# Scatterplot faceted by imputation method
+MIsummary.School[order(N)] %>%
+ggplot(aes(x = N, y = SS_Coverage_Simp, color = IMP_METHOD)) +
+  geom_point() +
+  labs(x = "School Size", y = "Simplified CI Coverage Rate") +
+  theme(legend.position = "none") +
+  facet_wrap(MISS_TYPE~IMP_METHOD, ncol = 7) +
+  scale_color_brewer(palette="Dark2") +
+  scale_x_continuous(breaks=seq(0, 3000, by=1000))
+```
+
+```{r fig.topcaption=TRUE, fig.cap = "Proportion of times that the imputed SS was found to differ from the true value based on the simplified F1 statistic"}`r ''`
+# Bar plot, grouping by imputation method
+# Faceting by missingness type and percentage
+MIsummary.School[, .("prop_p" = mean(SS_F1_pSimp_Class)), keyby = .(IMP_METHOD, MISS_PERC, MISS_TYPE)] %>%
+ggplot(aes(x = IMP_METHOD, y = prop_p, fill = IMP_METHOD)) +
+  geom_bar(stat = "identity") +
+  theme(legend.position = "none") +
+  facet_wrap(MISS_TYPE~MISS_PERC, ncol = 3) +
+  scale_color_brewer(palette="Dark2") +
+  labs(x = "Imputation Method", y = "Proportion Significant Differences") +
+  theme(axis.text.x = element_text(angle = 90))
+```
+
+### SGPs
+
+```{r fig.topcaption=TRUE, fig.cap = "SGP percent bias by imputation method, missingness percentage, and missingness type"}`r ''`
+# Faceted box plot, grouping by imputation method
+# Faceting by missing percentage and missingness type
+ggplot(MIsummary.School, aes(x = IMP_METHOD, y = SGP_Pct_Bias, fill = IMP_METHOD)) +
+  geom_boxplot() + coord_flip() +
+  labs(x = "Imputation Method", y = "Percent Bias") +
+  facet_wrap(MISS_PERC ~ MISS_TYPE) + 
+  scale_fill_brewer(palette="Dark2") +
+  theme(legend.position = "none") 
+```
+
+```{r fig.topcaption=TRUE, fig.cap = "SGP coverage rate by imputation method, missingness percentage, and missingness type"}`r ''`
+# Faceted box plot, grouping by imputation method
+# Faceting by missing percentage and missingness type
+ggplot(MIsummary.School, aes(x = IMP_METHOD, y = SGP_Coverage_Simp, fill = IMP_METHOD)) +
+  geom_boxplot() + coord_flip() +
+  labs(x = "Imputation Method", y = "Simplified CI Coverage Rate") +
+  facet_wrap(MISS_PERC ~ MISS_TYPE) + 
+  scale_fill_brewer(palette="Dark2") +
+  theme(legend.position = "none") 
+```
+
+```{r fig.topcaption=TRUE, fig.cap = "Scatterplot of SGP percent bias as a function of school size"}`r ''`
+# Scatterplot faceted by imputation method
+MIsummary.School[order(N)] %>%
+ggplot(aes(x = N, y = SGP_Pct_Bias, color = IMP_METHOD)) +
+  geom_point() +
+  labs(x = "School Size", y = "Percent Bias") +
+  theme(legend.position = "none") +
+  facet_wrap(MISS_TYPE~IMP_METHOD, ncol = 7) +
+  scale_color_brewer(palette="Dark2") +
+  scale_x_continuous(breaks=seq(0, 3000, by=1000))
+```
+
+```{r fig.topcaption=TRUE, fig.cap = "Scatterplot of SGP coverage rate as a function of school size"}`r ''`
+# Scatterplot faceted by imputation method
+MIsummary.School[order(N)] %>%
+ggplot(aes(x = N, y = SGP_Coverage_Simp, color = IMP_METHOD)) +
+  geom_point() +
+  labs(x = "School Size", y = "Simplified CI Coverage Rate") +
+  theme(legend.position = "none") +
+  facet_wrap(MISS_TYPE~IMP_METHOD, ncol = 7) +
+  scale_color_brewer(palette="Dark2") +
+  scale_x_continuous(breaks=seq(0, 3000, by=1000))
+```
+
+```{r fig.topcaption=TRUE, fig.cap = "Proportion of times that the imputed SGP was found to differ from the true value based on the simplified F1 statistic"}`r ''`
+# Bar plot, grouping by imputation method
+# Faceting by missingness type and percentage
+MIsummary.School[, .("prop_p" = mean(SGP_F1_pSimp_Class, na.rm = T)), keyby = .(IMP_METHOD, MISS_PERC, MISS_TYPE)] %>%
+ggplot(aes(x = IMP_METHOD, y = prop_p, fill = IMP_METHOD)) +
+  geom_bar(stat = "identity") +
+  theme(legend.position = "none") +
+  facet_wrap(MISS_TYPE~MISS_PERC, ncol = 3) +
+  scale_color_brewer(palette="Dark2") +
+  labs(x = "Imputation Method", y = "Proportion Significant Differences") +
+  theme(axis.text.x = element_text(angle = 90))
+```
+
+## Basic Regression Models {.tabset}
+
+### Grade/Content Area
+
+```{r}`r ''``r ''`
+# Fit models using fixest
+gc.raw.ss = feols(SS_Raw_Bias~ N + MISS_PERC + MISS_TYPE + i(IMP_METHOD, ref = "Observed") | GRADE^CONTENT_AREA, data = MIsummary.GC)
+gc.raw.sgp = feols(SGP_Raw_Bias~ N + MISS_PERC + MISS_TYPE + i(IMP_METHOD, ref = "Observed") | GRADE^CONTENT_AREA, data = MIsummary.GC[GRADE %in% 5:8])
+
+# Create table of results
+etable(gc.raw.ss, gc.raw.sgp, subtitles = c("Scale Scores", "SGPs"))[-c(1,2),] %>%
+  kable(format = "html", booktabs = T, row.names = T,
+        col.names = c("Scale Scores", "SGPs"),
+        caption = "Linear fixed-effect regression models for raw bias at the grade/content area level") %>%
+  kable_classic_2("hover", full_width = F)
+```
+
+```{r}`r ''``r ''`
+# Fit models using fixest
+gc.abs.ss = feols(abs(SS_Raw_Bias) ~ N + MISS_PERC + MISS_TYPE + i(IMP_METHOD, ref = "Observed") | GRADE^CONTENT_AREA, data = MIsummary.GC)
+gc.abs.sgp = feols(abs(SGP_Raw_Bias) ~ N + MISS_PERC + MISS_TYPE + i(IMP_METHOD, ref = "Observed") | GRADE^CONTENT_AREA, data = MIsummary.GC[GRADE %in% 5:8])
+
+# Create table of results
+etable(gc.abs.ss, gc.abs.sgp, subtitles = c("Scale Scores", "SGPs"))[-c(1,2),] %>%
+  kable(format = "html", booktabs = T, row.names = T,
+        col.names = c("Scale Scores", "SGPs"),
+        caption = "Linear fixed-effect regression models for absolute bias at the grade/content area level") %>%
+  kable_classic_2("hover", full_width = F)
+```
+
+```{r}`r ''``r ''`
+# Fit models using fixest
+gc.sub.ss = feols(SS_Raw_Bias ~ N + MISS_PERC + MISS_TYPE + i(IMP_METHOD, ref = "Observed") | GRADE^CONTENT_AREA, data = MIsummary.GC[GRADE %in% 5:8])
+gc.sub.sgp = feols(abs(SS_Raw_Bias) ~ N + MISS_PERC + MISS_TYPE + i(IMP_METHOD, ref = "Observed") | GRADE^CONTENT_AREA, data = MIsummary.GC[GRADE %in% 5:8])
+
+# Create table of results
+etable(gc.sub.ss, gc.sub.sgp, subtitles = c("Scale Scores: Raw Bias", "Scale Scores: Absolute Bias"))[-c(1,2),] %>%
+  kable(format = "html", booktabs = T, row.names = T,
+        col.names = c("Scale Scores", "SGPs"),
+        caption = "Linear fixed-effect regression models for raw and absolute scale score bias when removing grades 3 and 4") %>%
+  kable_classic_2("hover", full_width = F)
+```
+
+### School Level
+
+```{r}`r ''``r ''`
+# Fit models using fixest
+sc.raw.ss = feols(SS_Raw_Bias~ N + MISS_PERC + MISS_TYPE + i(IMP_METHOD, ref = "Observed"), data = MIsummary.School)
+sc.raw.sgp = feols(SGP_Raw_Bias~ N + MISS_PERC + MISS_TYPE + i(IMP_METHOD, ref = "Observed"), data = MIsummary.School)
+
+# Create table of results
+etable(sc.raw.ss, sc.raw.sgp, subtitles = c("Scale Scores", "SGPs"))[-c(1,2),] %>%
+  kable(format = "html", booktabs = T, row.names = T,
+        col.names = c("Scale Scores", "SGPs"),
+        caption = "Linear fixed-effect regression models for raw bias at the school level") %>%
+  kable_classic_2("hover", full_width = F)
+```
+
+```{r}`r ''``r ''`
+# Fit models using fixest
+sc.abs.ss = feols(abs(SS_Raw_Bias) ~ N + MISS_PERC + MISS_TYPE + i(IMP_METHOD, ref = "Observed"), data = MIsummary.School)
+sc.abs.sgp = feols(abs(SGP_Raw_Bias) ~ N + MISS_PERC + MISS_TYPE + i(IMP_METHOD, ref = "Observed"), data = MIsummary.School)
+
+# Create table of results
+etable(sc.abs.ss, sc.abs.sgp, subtitles = c("Scale Scores", "SGPs"))[-c(1,2),] %>%
+  kable(format = "html", booktabs = T, row.names = T,
+        col.names = c("Scale Scores", "SGPs"),
+        caption = "Linear fixed-effect regression models for absolute bias at the school level") %>%
+  kable_classic_2("hover", full_width = F)
+```
+# Characteristics Influencing L2PAN Efficacy {.tabset}
+
+```{r}`r ''`
+# Create data set just for L2PAN
+MIsummary.l2pan.GC = MIsummary.GC[IMP_METHOD == "L2PAN"]
+MIsummary.l2pan.School = MIsummary.School[IMP_METHOD == "L2PAN"]
+```
+
+## Scale Scores
+
+### Descriptive Statistics: Grade/Content Area
+
+```{r fig.topcaption=TRUE, fig.cap = "Average SS percent bias by grade/content area quantile, grade, and missingness characteristics"}`r ''`
+# Heat map for average PB by grade and N quantile
+MIsummary.l2pan.GC[, .("mean_pb" = mean(SS_Pct_Bias, na.rm = T)),
+                keyby = .(N_QUANT, GRADE, MISS_PERC, MISS_TYPE)] %>%
+ggplot(aes(x = N_QUANT, y = GRADE)) + 
+    geom_tile(aes(fill = mean_pb)) + 
+    scale_fill_gradient(low = "white", high = "aquamarine3", name = "Mean Percent Bias") + 
+    facet_wrap(MISS_TYPE~MISS_PERC) +
+    geom_text(aes(label = round(mean_pb, 2)), size = 3) +
+    labs(x = "Grade/Content Area Size Quantile", y = "Grade") 
+```
+
+```{r fig.topcaption=TRUE, fig.cap = "Average SS coverage rate by grade/content area quantile, grade, and missingness characteristics"}`r ''`
+# Heat map for average CR by grade and N quantile
+MIsummary.l2pan.GC[, .("mean_pb" = mean(SS_Coverage_Simp, na.rm = T)),
+                keyby = .(N_QUANT, GRADE, MISS_PERC, MISS_TYPE)] %>%
+ggplot(aes(x = N_QUANT, y = GRADE)) + 
+    geom_tile(aes(fill = mean_pb)) + 
+    scale_fill_gradient(low = "aquamarine3", high = "white", name = "Mean CI \nCoverage Rate") + 
+    facet_wrap(MISS_TYPE~MISS_PERC) +
+    geom_text(aes(label = round(mean_pb, 2)), size = 3) +
+    labs(x = "Grade/Content Area Size Quantile", y = "Grade") 
+```
+
+```{r fig.topcaption=TRUE, fig.cap = "Proportion of cases where a significant difference between the imputed and true SS value was found using the F1 statistic"}`r ''`
+# Heat map for proportion significant p-values by grade and N quantile
+MIsummary.l2pan.GC[, .("prop_f1p" = mean(SS_F1_pSimp_Class, na.rm = T)),
+                keyby = .(N_QUANT, GRADE, MISS_PERC, MISS_TYPE)] %>%
+ggplot(aes(x = N_QUANT, y = GRADE)) + 
+    geom_tile(aes(fill = prop_f1p)) + 
+    scale_fill_gradient(low = "white", high = "aquamarine3", name = "Proportion \nNulls Rejected") + 
+    facet_wrap(MISS_TYPE~MISS_PERC) +
+    geom_text(aes(label = round(prop_f1p, 2)), size = 3) +
+    labs(x = "Grade/Content Area Size Quantile", y = "Grade") 
+```
+
+```{r}`r ''`
+# Subset observations with SS percent bias > 5
+l2pan.highpb.ss = MIsummary.l2pan.GC[SS_Pct_Bias > 5]
+
+# Subset observations with SS CR < .9
+l2pan.lowcr.ss = MIsummary.l2pan.GC[SS_Coverage_Simp < .9]
+
+# Subset observations with both SS percent bias > 5 and CR < .9
+l2pan.pbcr.ss = MIsummary.l2pan.GC[SS_Pct_Bias > 5 & SS_Coverage_Simp < .9]
+
+# "Concerning" conditions
+l2pan.concern.ss = MIsummary.l2pan.GC[SS_Pct_Bias > 5 & SS_Coverage_Simp < .9 & SS_F1_pSimp_Class == 1]
+```
+
+```{r fig.topcaption=TRUE, fig.cap = "Density plot of flagged observations based on the scale score as a function of grade/content area size"}`r ''`
+# Density plot
+ggplot(l2pan.concern.ss, aes(x = N)) +
+  geom_density(fill = "aquamarine2", alpha = 0.6) +
+  labs(x = "Grade/Content Area Size", y = "Density") 
+```
+
+```{r fig.topcaption=TRUE, fig.cap = "Scatter plot of flagged observations based on the scale score as a function of grade/content area size and percent bias"}`r ''`
+# Scatter plot
+ggplot(l2pan.concern.ss, aes(x = N, y = SS_Pct_Bias)) +
+  geom_point(color = "aquamarine4") +
+  labs(x = "Grade/Content Area Size", y = "Percent Bias") +
+  scale_color_brewer(palette="Dark2")
+```
+
+```{r fig.topcaption=TRUE, fig.cap = "Bar plot of flagged observations based on the scale score as a function of grade and missingness"}`r ''`
+# Bar plot
+ggplot(l2pan.concern.ss, aes(x = GRADE, fill = GRADE)) +
+  geom_bar() +
+  theme(legend.position = "none") +
+  facet_wrap(MISS_TYPE~MISS_PERC, ncol = 3) +
+  scale_color_brewer(palette="Dark2") +
+  labs(x = "Grade", y = "Number 'Flagged' Observations") 
+```
+
+### Descriptive Statistics: School Level
+
+```{r fig.topcaption=TRUE, fig.cap = "Average SS percent bias by school size quantile and missingness characteristics"}`r ''`
+# Heat map for average PB by missingness and N quantile
+MIsummary.l2pan.School[, .("mean_pb" = mean(SS_Pct_Bias, na.rm = T)),
+                keyby = .(N_QUANT, MISS_PERC, MISS_TYPE)] %>%
+ggplot(aes(x = N_QUANT, y = MISS_PERC)) + 
+    geom_tile(aes(fill = mean_pb)) + 
+    scale_fill_gradient(low = "white", high = "aquamarine3", name = "Mean Percent Bias") + 
+    facet_wrap(~MISS_TYPE) +
+    geom_text(aes(label = round(mean_pb, 2)), size = 3) +
+    labs(x = "School Size Quantile", y = "Missingness Percentage") 
+```
+
+```{r fig.topcaption=TRUE, fig.cap = "Average SS coverage rate by school size quantile and missingness characteristics"}`r ''`
+# Heat map for average PB by missingness and N quantile
+MIsummary.l2pan.School[, .("mean_pb" = mean(SS_Coverage_Simp, na.rm = T)),
+                keyby = .(N_QUANT, MISS_PERC, MISS_TYPE)] %>%
+ggplot(aes(x = N_QUANT, y = MISS_PERC)) + 
+    geom_tile(aes(fill = mean_pb)) + 
+    scale_fill_gradient(low = "aquamarine3", high = "white", name = "Mean CI \nCoverage Rate") + 
+    facet_wrap(~MISS_TYPE) +
+    geom_text(aes(label = round(mean_pb, 2)), size = 3) +
+    labs(x = "School Size Quantile", y = "Missingness Percentage") 
+```
+
+```{r fig.topcaption=TRUE, fig.cap = "Proportion of cases where a significant difference between the imputed and true SS value was found using the F1 statistic"}`r ''`
+# Heat map for proportion significant p-values by missingness and N quantile
+MIsummary.l2pan.School[, .("prop_f1p" = mean(SS_F1_pSimp_Class, na.rm = T)),
+                keyby = .(N_QUANT, MISS_PERC, MISS_TYPE)] %>%
+ggplot(aes(x = N_QUANT, y = MISS_PERC)) + 
+    geom_tile(aes(fill = prop_f1p)) + 
+    scale_fill_gradient(low = "white", high = "aquamarine3", name = "Proportion \nNulls Rejected") + 
+    facet_wrap(~MISS_TYPE) +
+    geom_text(aes(label = round(prop_f1p, 2)), size = 3) +
+    labs(x = "School Size Quantile", y = "Missingness Percentage") 
+```
+
+```{r}`r ''`
+# Subset observations with SS percent bias > 5
+l2pan.highpb.ss = MIsummary.l2pan.School[SS_Pct_Bias > 5]
+
+# Subset observations with SS CR < .9
+l2pan.lowcr.ss = MIsummary.l2pan.School[SS_Coverage_Simp < .9]
+
+# Subset observations with both SS percent bias > 5 and CR < .9
+l2pan.pbcr.ss = MIsummary.l2pan.School[SS_Pct_Bias > 5 & SS_Coverage_Simp < .9]
+
+# "Concerning" conditions
+l2pan.concern.ss = MIsummary.l2pan.School[SS_Pct_Bias > 5 & SS_Coverage_Simp < .9 & SS_F1_pSimp_Class == 1]
+```
+
+### Classification Models
+
+```{r}`r ''`
+# Generate binary outcome
+MIsummary.l2pan.GC[, SS_FLAG := ifelse(SS_Pct_Bias > 5 & SS_Coverage_Simp < .9 & SS_F1_pSimp_Class == 1, 1, 0)]
+
+# Fit fixed effects model for grade/content area
+fe.flag.gc = feglm(SS_FLAG ~ N + MISS_TYPE + MISS_PERC + 
+                             i(N, MISS_TYPE) + i(N, MISS_PERC) + i(MISS_TYPE, MISS_PERC) | CONTENT_AREA^GRADE, 
+                   data = MIsummary.l2pan.GC, family = "binomial")
+
+# Fit school level model
+fe.cr.school = feglm(SS_Coverage_Simp ~ N + MISS_TYPE + MISS_PERC + 
+                             i(N, MISS_TYPE) + i(N, MISS_PERC) + i(MISS_TYPE, MISS_PERC), 
+                   data = MIsummary.l2pan.School, family = "binomial")
+  
+# Create table of results
+etable(fe.flag.gc, fe.cr.school, subtitles = c("Grade/Content Area", "School"))[-c(1,2),] %>%
+  kable(format = "html", booktabs = T, row.names = T,
+        col.names = c("Grade/Content Area: Flagged", "School: CI Coverage Rates"),
+        caption = "Logistic fixed-effect regression models for grade/content area flagged observations and school-level CI coverage rates") %>%
+  kable_classic_2("hover", full_width = F) %>%
+  scroll_box(height = "700px")
+```
+
+## Student Growth Percentiles
+
+### Descriptive Statistics: Grade/Content Area
+
+```{r fig.topcaption=TRUE, fig.cap = "Average SGP percent bias by grade/content area quantile, grade, and missingness characteristics"}`r ''`
+# Heat map for average PB by grade and N quantile
+MIsummary.l2pan.GC[, .("mean_pb" = mean(SGP_Pct_Bias, na.rm = T)),
+                keyby = .(N_QUANT, GRADE, MISS_PERC, MISS_TYPE)] %>%
+ggplot(aes(x = N_QUANT, y = GRADE)) + 
+    geom_tile(aes(fill = mean_pb)) + 
+    scale_fill_gradient(low = "white", high = "aquamarine3", name = "Mean Percent Bias") + 
+    facet_wrap(MISS_TYPE~MISS_PERC) +
+    geom_text(aes(label = round(mean_pb, 2)), size = 3) +
+    labs(x = "Grade/Content Area Size Quantile", y = "Grade") 
+```
+
+```{r fig.topcaption=TRUE, fig.cap = "Average SGP coverage rate by grade/content area quantile, grade, and missingness characteristics"}`r ''`
+# Heat map for average CR by grade and N quantile
+MIsummary.l2pan.GC[, .("mean_pb" = mean(SGP_Coverage_Simp, na.rm = T)),
+                keyby = .(N_QUANT, GRADE, MISS_PERC, MISS_TYPE)] %>%
+ggplot(aes(x = N_QUANT, y = GRADE)) + 
+    geom_tile(aes(fill = mean_pb)) + 
+    scale_fill_gradient(low = "aquamarine3", high = "white", name = "Mean CI \nCoverage Rate") + 
+    facet_wrap(MISS_TYPE~MISS_PERC) +
+    geom_text(aes(label = round(mean_pb, 2)), size = 3) +
+    labs(x = "Grade/Content Area Size Quantile", y = "Grade") 
+```
+
+```{r fig.topcaption=TRUE, fig.cap = "Proportion of cases where a significant difference between the imputed and true SGP value was found using the F1 statistic"}`r ''`
+# Heat map for proportion significant p-values by grade and N quantile
+MIsummary.l2pan.GC[, .("prop_f1p" = mean(SGP_F1_pSimp_Class, na.rm = T)),
+                keyby = .(N_QUANT, GRADE, MISS_PERC, MISS_TYPE)] %>%
+ggplot(aes(x = N_QUANT, y = GRADE)) + 
+    geom_tile(aes(fill = prop_f1p)) + 
+    scale_fill_gradient(low = "white", high = "aquamarine3", name = "Proportion \nNulls Rejected") + 
+    facet_wrap(MISS_TYPE~MISS_PERC) +
+    geom_text(aes(label = round(prop_f1p, 2)), size = 3) +
+    labs(x = "Grade/Content Area Size Quantile", y = "Grade") 
+```
+
+```{r}`r ''`
+# Subset "Concerning" conditions
+l2pan.concern.sgp = MIsummary.l2pan.GC[SGP_Pct_Bias > 5 & SGP_Coverage_Simp < .9 & SGP_F1_pSimp_Class == 1]
+```
+
+```{r fig.topcaption=TRUE, fig.cap = "Density plot of flagged observations based on the SGP as a function of grade/content area size"}`r ''`
+# Density plot
+ggplot(l2pan.concern.sgp, aes(x = N)) +
+  geom_density(fill = "aquamarine2", alpha = 0.6) +
+  labs(x = "Grade/Content Area Size", y = "Density") 
+```
+
+```{r fig.topcaption=TRUE, fig.cap = "Scatter plot of flagged observations based on the SGPs as a function of grade/content area size and percent bias"}`r ''`
+# Scatter plot
+ggplot(l2pan.concern.sgp, aes(x = N, y = SGP_Pct_Bias)) +
+  geom_point(color = "aquamarine4") +
+  labs(x = "Grade/Content Area Size", y = "Percent Bias") +
+  scale_color_brewer(palette="Dark2")
+```
+
+```{r fig.topcaption=TRUE, fig.cap = "Bar plot of flagged observations based on the SGP as a function of grade and missingness"}`r ''`
+# Bar plot
+ggplot(l2pan.concern.sgp, aes(x = GRADE, fill = GRADE)) +
+  geom_bar() +
+  theme(legend.position = "none") +
+  facet_wrap(MISS_TYPE~MISS_PERC, ncol = 3) +
+  scale_color_brewer(palette="Dark2") +
+  labs(x = "Grade", y = "Number 'Flagged' Observations") 
+```
+
+### Descriptive Statistics: School Level
+
+```{r fig.topcaption=TRUE, fig.cap = "Average SGP percent bias by school size quantile and missingness characteristics"}`r ''`
+# Heat map for average PB by missingness and N quantile
+MIsummary.l2pan.School[, .("mean_pb" = mean(SGP_Pct_Bias, na.rm = T)),
+                keyby = .(N_QUANT, MISS_PERC, MISS_TYPE)] %>%
+ggplot(aes(x = N_QUANT, y = MISS_PERC)) + 
+    geom_tile(aes(fill = mean_pb)) + 
+    scale_fill_gradient(low = "white", high = "aquamarine3", name = "Mean Percent Bias") + 
+    facet_wrap(~MISS_TYPE) +
+    geom_text(aes(label = round(mean_pb, 2)), size = 3) +
+    labs(x = "School Size Quantile", y = "Missingness Percentage") 
+```
+
+```{r fig.topcaption=TRUE, fig.cap = "Average SGP coverage rate by school size quantile and missingness characteristics"}`r ''`
+# Heat map for average PB by missingness and N quantile
+MIsummary.l2pan.School[, .("mean_pb" = mean(SGP_Coverage_Simp, na.rm = T)),
+                keyby = .(N_QUANT, MISS_PERC, MISS_TYPE)] %>%
+ggplot(aes(x = N_QUANT, y = MISS_PERC)) + 
+    geom_tile(aes(fill = mean_pb)) + 
+    scale_fill_gradient(low = "aquamarine3", high = "white", name = "Mean CI \nCoverage Rate") + 
+    facet_wrap(~MISS_TYPE) +
+    geom_text(aes(label = round(mean_pb, 2)), size = 3) +
+    labs(x = "School Size Quantile", y = "Missingness Percentage") 
+```
+
+```{r fig.topcaption=TRUE, fig.cap = "Proportion of cases where a significant difference between the imputed and true SGP value was found using the F1 statistic"}`r ''`
+# Heat map for proportion significant p-values by missingness and N quantile
+MIsummary.l2pan.School[, .("prop_f1p" = mean(SGP_F1_pSimp_Class, na.rm = T)),
+                keyby = .(N_QUANT, MISS_PERC, MISS_TYPE)] %>%
+ggplot(aes(x = N_QUANT, y = MISS_PERC)) + 
+    geom_tile(aes(fill = prop_f1p)) + 
+    scale_fill_gradient(low = "white", high = "aquamarine3", name = "Proportion \nNulls Rejected") + 
+    facet_wrap(~MISS_TYPE) +
+    geom_text(aes(label = round(prop_f1p, 2)), size = 3) +
+    labs(x = "School Size Quantile", y = "Missingness Percentage") 
+```
+
+```{r}`r ''`
+# Subset "Concerning" conditions
+l2pan.concern.sgp = MIsummary.l2pan.School[SGP_Pct_Bias > 5 & SGP_Coverage_Simp < .9 & SGP_F1_pSimp_Class == 1]
+```
+
+```{r fig.topcaption=TRUE, fig.cap = "Density plot of flagged observations based on the SGP as a function of school size"}`r ''`
+# Density plot
+ggplot(l2pan.concern.sgp, aes(x = N)) +
+  geom_density(fill = "aquamarine2", alpha = 0.6) +
+  labs(x = "School Size", y = "Density") 
+```
+
+```{r fig.topcaption=TRUE, fig.cap = "Scatter plot of flagged observations based on the SGPs as a function of school size and percent bias"}`r ''`
+# Scatter plot
+ggplot(l2pan.concern.sgp, aes(x = N, y = SGP_Pct_Bias)) +
+  geom_point(color = "aquamarine4") +
+  labs(x = "School Size", y = "Percent Bias") +
+  scale_color_brewer(palette="Dark2") 
+```
+
+```{r fig.topcaption=TRUE, fig.cap = "Bar plot of flagged observations based on the SGP as a function of missingness"}`r ''`
+# Bar plot
+ggplot(l2pan.concern.sgp, aes(x = MISS_PERC, fill = MISS_PERC)) +
+  geom_bar() +
+  theme(legend.position = "none") +
+  facet_wrap(~MISS_TYPE, ncol = 3) +
+  scale_color_brewer(palette="Dark2") +
+  labs(x = "Missingness Percentage", y = "Number 'Flagged' Observations") + 
+  theme(axis.text.x = element_text(angle = 90))
+```
+
+### Classification Model
+
+```{r}`r ''`
+# Generate binary outcome
+MIsummary.l2pan.sgp.GC = MIsummary.l2pan.GC[!is.na(SGP_Pct_Bias)]
+MIsummary.l2pan.sgp.GC[, SGP_FLAG := ifelse(SGP_Pct_Bias > 5 & SGP_Coverage_Simp < .9 & SGP_F1_pSimp_Class == 1, 1, 0)]
+MIsummary.l2pan.sgp.School = MIsummary.l2pan.School[!is.na(SGP_Pct_Bias)]
+MIsummary.l2pan.sgp.School[, SGP_FLAG := ifelse(SGP_Pct_Bias > 5 & SGP_Coverage_Simp < .9 & SGP_F1_pSimp_Class == 1, 1, 0)]
+
+# Fit fixed effects model for grade/content area
+fe.flag.gc = feglm(SGP_FLAG ~ N + MISS_TYPE + MISS_PERC + 
+                             i(N, MISS_TYPE) + i(N, MISS_PERC) + i(MISS_TYPE, MISS_PERC) | CONTENT_AREA^GRADE, 
+                   data = MIsummary.l2pan.sgp.GC, family = "binomial")
+
+# Fit school level model
+fe.flag.school = feglm(SGP_Coverage_Simp ~ N + MISS_TYPE + MISS_PERC + 
+                             i(N, MISS_TYPE) + i(N, MISS_PERC) + i(MISS_TYPE, MISS_PERC), 
+                   data = MIsummary.l2pan.sgp.School, family = "binomial")
+  
+# Create table of results
+etable(fe.flag.gc, fe.flag.school, subtitles = c("Grade/Content Area", "School"))[-c(1,2),] %>%
+  kable(format = "html", booktabs = T, row.names = T,
+        col.names = c("Grade/Content Area", "School"),
+        caption = "Logistic fixed-effect regression models for grade/content area or school-level flagged observations") %>%
+  kable_classic_2("hover", full_width = F) %>%
+  scroll_box(height = "700px")
+```
+
+````
