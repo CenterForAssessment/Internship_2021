@@ -22,10 +22,10 @@ navbar:
     title: ~
     type: default
     left:
-    - text: Analysis
+    - text: Vignettes
       menu:
       - text: "Multiple Imputation"
-        href: articles/MI_Summary.html
+        href: articles/MI_Comparison_Summary.html
       - text: "Practice Vignette"
         href: articles/practice_vignette.html
     - text: Source Code
