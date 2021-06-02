@@ -1,7 +1,5 @@
 ---
-title: "Internship Update Presentation"
-author: "Allie Cooperman"
-date: "June 4, 2021"
+title: "Internship Update Presentations"
 output: 
   bookdown::html_document2: 
     toc: true
@@ -9,12 +7,10 @@ output:
     toc_depth: 1
 ---
 
-# June 4th, 2021. Presentation Slides for Internship Update 
+# June 4th, 2021
 
-The presentation contains initial work on missing data imputation associated with calculating aggregate school level statistics due to pandemic realted missing student data ... 
+The first presentation summarizes initial work on multiple imputation (MI) comparisons for calculating "adjusted" aggregate summary statistics. 
 
-* [June 4 Presentation Slides](https://centerforassessment.github.io/Internship_2021/articles/first_update_presentation.html)
-* <a href="http://mangothecat.github.io/rmdshower/skeleton.html" target="_blank">Opens up another window</a>
-* <a href="https://centerforassessment.github.io/Internship_2021/articles/NCME_SGP_Training_Session_Presentation_040711.pdf" target="_blank">PDF of presentation (not really)</a>
+* <a href="https://centerforassessment.github.io/Internship_2021/articles/NCME_SGP_Training_Session_Presentation_040711.pdf" target="_blank">PDF Presentation Slides (Forthcoming)</a>
 
 

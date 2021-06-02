@@ -24,11 +24,14 @@ navbar:
     left:
     - text: Analysis
       menu:
+      - text: "Multiple Imputation"
+        href: articles/MI_Summary.html
       - text: "Practice Vignette"
         href: articles/practice_vignette.html
     - text: Source Code
       menu:
-      - text: "Example R Code"
+      - text: "Multiple Imputation Comparisons"
+        href: articles/MI_Source_Code_Landing_Page.html
     - text: Presentations
       menu:
       - text: "Internship Presentations"
