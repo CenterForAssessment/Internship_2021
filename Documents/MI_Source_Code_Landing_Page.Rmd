@@ -1,0 +1,32 @@
+---
+title: "Source Code for Multiple Imputation Comparison Analyses"
+date: "Last Updated: June 2, 2021"
+output: html_document
+---
+
+# Analysis Summary
+
+The following files present source code for comparing multiple imputation (MI) methods when calculating aggregated scale scores and student growth percentiles. When data are missing, is MI an appropriate method for creating "adjusted" summary statistics? If so, which MI method is most effective and in what data contexts?
+
+# Individual Reports
+
+The following .Rmd files can be rendered together to create an HTML report for a given type and percentage of missingness. Certain parameter values (e.g., missingness type, data directory, author name, etc.) are set in the list of `params` in the YAML header.  
+
+* [Parent .Rmd File](https://centerforassessment.github.io/Internship_2021/articles/MI_Individual_Reports_Main.html)
+* [Child .Rmd File: Scale Scores](https://centerforassessment.github.io/Internship_2021/articles/MI_Individual_Reports_Child_SS.html)
+* [Child .Rmd File: Student Growth Percentiles](https://centerforassessment.github.io/Internship_2021/articles/MI_Individual_Reports_Child_SGP.html)
+* [Child .Rmd File: Baseline Student Growth Percentiles](https://centerforassessment.github.io/Internship_2021/articles/MI_Individual_Reports_Child_SGPB.html)
+
+# Comparison Summary
+
+Coming soon!
+
+# Markdown and R Resources
+
+* [R Markdown Cookbook](https://bookdown.org/yihui/rmarkdown-cookbook/)
+* [data.table vignette](https://cran.r-project.org/web/packages/data.table/vignettes/datatable-intro.html)
+* [ggplot2 website](https://ggplot2.tidyverse.org/)
+* [fixest vignette](https://cran.r-project.org/web/packages/fixest/vignettes/fixest_walkthrough.html)
+* [kableExtra HTML table vignette](https://cran.r-project.org/web/packages/kableExtra/vignettes/awesome_table_in_html.html)
+
+

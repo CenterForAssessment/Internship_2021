@@ -1,0 +1,199 @@
+---
+title: "Source Code for Multiple Imputation Comparisons: Individual Reports, Main .Rmd"
+author: "Allie Cooperman, Adam Van Iwaarden, and Damian Betebenner"
+date: "`r format(Sys.time(), '%B %d, %Y')`"
+output: html_document
+params: 
+    printcode: TRUE
+    evalcode: FALSE
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(cache   = FALSE, 
+                      eval    = params$evalcode,
+                      echo    = params$printcode, 
+                      message = FALSE, 
+                      warning = FALSE,
+                      fig.align = "center") 
+```
+
+
+````md
+
+---
+date: "`r "\u0060r format(Sys.time(), '%B %d, %Y')\u0060"`"
+output: 
+  html_document:
+    theme: sandstone
+    toc: true
+    toc_float: true
+    toc_depth: 4
+    highlight: tango
+params: 
+    printcode: FALSE
+    evalcode: TRUE
+    misstype: "MCAR"
+    missperc: 30
+    authorname: "AUTHOR"
+    datadir: "./FilePath"
+title: "Learning Loss Analysis: Imputation Method Comparisons for Data `r "\u0060r params$misstype\u0060"`, `r "\u0060r as.character(params$missperc)\u0060"`% Missing"
+author: "`r "\u0060r params$authorname\u0060"`"
+knit: (function(input,...) {
+       rmarkdown::render(input, 
+                         output_file =  "Learning Loss Analysis_MI Comparison_MCAR_30.html") })
+---
+
+```{r}`r ''`
+knitr::opts_chunk$set(cache   = FALSE, 
+                      eval    = params$evalcode,
+                      echo    = params$printcode, 
+                      message = FALSE, 
+                      warning = FALSE,
+                      fig.align = "center") 
+```
+
+# File Overview
+
+This file examines the performance of six multiple imputation (MI) methods when imputing missing values for (a) scale scores, (b) student growth percentiles (SGPs), and (c) baseline SGPs. The missing data are `r "\u0060r params$misstype\u0060"`, and `r "\u0060r params$missperc\u0060"`% of the data are missing. The six imputation methods include:
+
+- Cross-sectional multi-level modeling with `pan` (L2PAN);
+- Cross-sectional multi-level modeling with `lmer` (L2LMER);
+- Longitudinal multi-level modeling with `pan` (L2PAN_LONG);
+- Longitudinal multi-level modeling with `lmer` (L2LMER_LONG);
+- Quantile regression (RQ); and 
+- Predictive mean matching (PMM).
+
+All MI analyses were conducted using the `mice` package (van Buuren & Groothuis-Oudshoorn, 2011), with calls to corresponding packages (e.g., `pan` [Zhao & Schafer, 2018] and `lme4` [Bates et al., 2015]). The performance of the MI methods is examined at the **school** level and operationalized using three indices. The first is raw bias, defined as the average imputed value minus the average value from the complete data set. The second index is the coverage rate of the simplified confidence interval (CI; Vink & van Buuren, 2014). The third index is percent bias. There is recent research suggesting that an MI method is performing relatively well when the percent bias is less than 5% (Miri et al., 2020; Qi et al., 2010) and the coverage rate is greater than 0.90 (Demirtas, 2004; Qi et al., 2010). 
+
+When analyzing data at the grade/content area level, observations with a grade/content area size ($N$) less than 10 are removed. Similarly, when analyzing data at the full school level (i.e., aggregating across grades and content areas within a school), schools with $N<10$ are removed. 
+
+```{r}`r ''`
+# Load libraries
+require(pacman)
+pacman::p_load(car, data.table, ggplot2, kableExtra, fixest)
+
+# Load summary data
+load(file.path(params$datadir, "L2PAN_Summaries.rda"))
+load(file.path(params$datadir, "L2PAN_LONG_Summaries.rda"))
+load(file.path(params$datadir, "L2LMER_Summaries.rda"))
+load(file.path(params$datadir, "L2LMER_LONG_Summaries.rda"))
+load(file.path(params$datadir, "PMM_Summaries.rda"))
+load(file.path(params$datadir, "RQ_Summaries.rda"))
+
+# Create "observed" cases
+Observed.GC = copy(PMM_Summaries[["SCHOOL"]][["GRADE_CONTENT"]][["Evaluation"]])[, IMP_METHOD := "Observed"]
+Observed.GC[, SS_Raw_Bias := SS_Obs_Raw_Bias]
+Observed.GC[, SGP_Raw_Bias := SGP_Obs_Raw_Bias]
+Observed.GC[, SGPB_Raw_Bias := SGPB_Obs_Raw_Bias]
+    
+Observed.School = copy(PMM_Summaries[["SCHOOL"]][["GLOBAL"]][["Evaluation"]])[, IMP_METHOD := "Observed"]
+Observed.School[, SS_Raw_Bias := SS_Obs_Raw_Bias]
+Observed.School[, SGP_Raw_Bias := SGP_Obs_Raw_Bias]
+Observed.School[, SGPB_Raw_Bias := SGPB_Obs_Raw_Bias]
+
+# Create long data.table combining imputation methods 
+# By grade/content area
+Imputation_Summary_All_Methods_GC = rbindlist(list(
+  
+  # L2PAN
+  data.table(L2PAN_Summaries$SCHOOL$GRADE_CONTENT$Evaluation, "IMP_METHOD" = "L2PAN"),
+  
+  # L2PAN LONG
+  data.table(L2PAN_LONG_Summaries$SCHOOL$GRADE_CONTENT$Evaluation, "IMP_METHOD" = "L2PAN_LONG"),
+  
+   # L2LMER
+  data.table(L2LMER_Summaries$SCHOOL$GRADE_CONTENT$Evaluation, "IMP_METHOD" = "L2LMER"),
+  
+  # L2LMER LONG
+  data.table(L2LMER_LONG_Summaries$SCHOOL$GRADE_CONTENT$Evaluation, "IMP_METHOD" = "L2LMER_LONG"),
+  
+  # PMM
+  data.table(PMM_Summaries$SCHOOL$GRADE_CONTENT$Evaluation, "IMP_METHOD" = "PMM"),
+  
+  # RQ
+  data.table(RQ_Summaries$SCHOOL$GRADE_CONTENT$Evaluation, "IMP_METHOD" = "RQ"),
+  
+  # Observed
+  data.table(Observed.GC))
+  
+)
+
+# Convert imputation method, grade, and content area variables to class "factor"
+Imputation_Summary_All_Methods_GC[, IMP_METHOD := factor(IMP_METHOD, 
+                                    levels = rev(c("Observed", "PMM", "RQ", "L2PAN", "L2LMER", "L2PAN_LONG", "L2LMER_LONG")))]
+Imputation_Summary_All_Methods_GC[, GRADE := as.factor(GRADE)]
+Imputation_Summary_All_Methods_GC[, CONTENT_AREA := as.factor(CONTENT_AREA)]
+
+# Remove observations with N (grade/content area) less than 10
+Imputation_Summary_All_Methods_GC = Imputation_Summary_All_Methods_GC[N >= 10]
+setkey(Imputation_Summary_All_Methods_GC, IMP_METHOD)
+
+# Create long data.table combining imputation methods 
+# Aggregated at school level
+Imputation_Summary_All_Methods_Global = rbindlist(list(
+  
+  # L2PAN
+  data.table(L2PAN_Summaries$SCHOOL$GLOBAL$Evaluation, "IMP_METHOD" = "L2PAN"),
+  
+  # L2PAN LONG
+  data.table(L2PAN_LONG_Summaries$SCHOOL$GLOBAL$Evaluation, "IMP_METHOD" = "L2PAN_LONG"),
+  
+   # L2LMER
+  data.table(L2LMER_Summaries$SCHOOL$GLOBAL$Evaluation, "IMP_METHOD" = "L2LMER"),
+  
+  # L2LMER LONG
+  data.table(L2LMER_LONG_Summaries$SCHOOL$GLOBAL$Evaluation, "IMP_METHOD" = "L2LMER_LONG"),
+  
+  # PMM
+  data.table(PMM_Summaries$SCHOOL$GLOBAL$Evaluation, "IMP_METHOD" = "PMM"),
+  
+  # RQ
+  data.table(RQ_Summaries$SCHOOL$GLOBAL$Evaluation, "IMP_METHOD" = "RQ"),
+  
+  # Observed
+  data.table(Observed.School))
+  
+)
+
+# Convert imputation method, grade, and content area variables to class "factor"
+Imputation_Summary_All_Methods_Global[, IMP_METHOD := factor(IMP_METHOD, 
+                                      levels = rev(c("Observed", "PMM", "RQ", "L2PAN", "L2LMER", "L2PAN_LONG", "L2LMER_LONG")))]
+
+# Remove observations with N_S (school-level) less than 10
+Imputation_Summary_All_Methods_Global = Imputation_Summary_All_Methods_Global[N >= 10]
+setkey(Imputation_Summary_All_Methods_Global, IMP_METHOD)
+```
+
+# Scale Scores (SS)
+
+
+```{r child = 'Imputation Comparison_Scale Score.Rmd'}`r ''`
+
+```
+
+# Student Growth Percentiles (SGPs)
+
+```{r child = 'Imputation Comparison_SGP.Rmd'}`r ''`
+
+```
+
+# Baseline SGPs
+
+```{r child = 'Imputation Comparison_Baseline SGP.Rmd'}`r ''`
+
+```
+
+# References
+
+- Bates, D., Maechler, M., Bolker, B., & Walker, S. (2015). Fitting linear mixed-effects models using lme4. *Journal of Statistical Software, 67*(1). 1-48. https://doi.org/10.18637/jss.v067.i01.
+- Berge, L. (2018). Efficient estimation of maximum likelihood models with multiple fixed-effects: the R package FENmlm. *CREA Discussion Papers.*
+- Betebenner, D., & Van Iwaarden, A. (2021). SGP Research for Demonstration. *Github*.
+- Demirtas, H. (2004). Simulation driven inferences for multiply imputed longitudinal datasets. *Statistica neerlandica, 58*(4), 466-482.  https://doi.org/10.1111/j.1467-9574.2004.00271.x
+- Miri, H. H., Hassanzadeh, J., Khaniki, S. H., Akrami, R., & Sirjani, E. (2020). Accuracy of five multiple imputation methods in estimating prevalence of Type 2 diabetes based on STEPS surveys. *Journal of Epidemiology and Global Health, 10*(1), 36-41. https://doi.org/10.2991/jegh.k.191207.001
+- Qi, L., Wang, Y.-F., & He, Y. (2010). A comparison of multiple imputation and fully augmented weighted estimators for Cox regression with missing covariates. *Statistics in Medicine, 29*(25), 2592-2604. https://doi.org/10.1002/sim.4016
+- van Buuren, S. (2018). *Flexible imputation of missing data*. CRC Press. https://stefvanbuuren.name/fimd/
+- van Buuren, S., & Groothuis-Oudshoorn, K. (2011). mice: Multivariate imputation by chained equations in R. *Journal of Statistical Software, 45*(3), 1-67. https://www.jstatsoft.org/v45/i03/
+- Vink, G., & van Buuren, S. (2014). Pooling multiple imputations when the sample happens to be the population. *arXiv Pre-Print 1409.8542.*
+- Zhao, J. H., & Schafer, J. L. (2018). pan: Multiple imputation for multivariate panel or clustered data. R package version 1.6. 
+
+````

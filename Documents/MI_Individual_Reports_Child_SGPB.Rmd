@@ -1,0 +1,809 @@
+---
+title: "Source Code for Multiple Imputation Comparisons: Individual Reports, Baseline SGP Summaries"
+author: "Allie Cooperman, Adam Van Iwaarden, and Damian Betebenner"
+date: "`r format(Sys.time(), '%B %d, %Y')`"
+output: html_document
+params: 
+    printcode: TRUE
+    evalcode: FALSE
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(cache   = FALSE, 
+                      eval    = params$evalcode,
+                      echo    = params$printcode, 
+                      message = FALSE, 
+                      warning = FALSE,
+                      fig.align = "center") 
+```
+
+````md
+
+---
+title: 'Imputation Method Performance: Baseline Student Growth Percentiles'
+author: "AUTHOR"
+date:  "`r "\u0060r format(Sys.time(), '%B %d, %Y')\u0060"`"
+output: 
+  html_document:
+    theme: sandstone
+    toc: true
+    toc_float: true
+    toc_depth: 4
+    highlight: tango
+---
+
+## Summary Tables
+
+In the following summary tables, cases where the percent bias is less than 5% and the coverage rate is greater than 0.90 are bolded.
+
+### Grade by Content Area
+
+```{r}`r ''`
+# Create factor variable based on quantiles of grade/content area size
+Imputation_Summary_All_Methods_GC[, N_QUANT := cut(N, breaks = c(quantile(N, seq(0, 1, by = 0.25))),
+                                                   labels = c("0-25%", "25-50%", "50-75%", "75-100%"),
+                                                   include.lowest = T)]
+Imputation_Summary_All_Methods_Global[, N_QUANT := cut(N, breaks = c(quantile(N, seq(0, 1, by = 0.25))),
+                                                   labels = c("0-25%", "25-50%", "50-75%", "75-100%"),
+                                                   include.lowest = T)]
+
+# Summary table by grade, content area, and imputation method
+Summary_GradeContent = Imputation_Summary_All_Methods_GC[,.("mean_pctbias" = mean(SGPB_Pct_Bias, na.rm = T),
+                                     "mean_ci" = mean(SGPB_Coverage_Simp, na.rm = T),
+                                     "mean_rawbias" = mean(SGPB_Raw_Bias, na.rm = T)),
+                                       keyby = .(CONTENT_AREA, GRADE, 
+                                                 IMP_METHOD)][,-1]
+boldrows = which(Summary_GradeContent$mean_pctbias < 5 & Summary_GradeContent$mean_ci > 0.9)
+kable(Summary_GradeContent, format = "html", digits = 3, col.names = c("Grade", "Imputation Method", "Mean Percent Bias", "Mean CI Coverage Rate", "Mean Raw Bias"),
+      caption = "Summary statistics by content area, grade, and imputation method") %>%
+   kable_styling(bootstrap_options = "striped", full_width = F)  %>%
+   row_spec(boldrows, bold = T, color = "red") %>%
+   pack_rows("ELA", 1, 36) %>%
+   pack_rows("Mathematics", 37, 72) %>%
+   scroll_box(height = "500px")
+```
+
+### School Size
+
+```{r}`r ''`
+# Summary table by N quantile and imputation method
+Summary_GCArea = Imputation_Summary_All_Methods_GC[,.("mean_pctbias" = mean(SGPB_Pct_Bias, na.rm = T),
+                                                  "mean_ci" = mean(SGPB_Coverage_Simp, na.rm = T),
+                                                  "mean_rawbias" = mean(SGPB_Raw_Bias, na.rm = T)),
+                                                   keyby = .(N_QUANT, IMP_METHOD)]
+boldrows = which(Summary_GCArea$mean_pctbias < 5 & Summary_GCArea$mean_ci > 0.9)
+kable(Summary_GCArea, format = "html", digits = 3, col.names = c("Grade/Content Area Size Quantile", "Imputation Method", 
+                                                   "Mean Percent Bias", "Mean CI Coverage Rate", "Mean Raw Bias"),
+        caption = "Summary statistics by grade/content area size quantile and imputation method") %>%
+   kable_styling(bootstrap_options = "striped", full_width = F)  %>%
+   row_spec(boldrows, bold = T, color = "red") %>%
+   scroll_box(height = "500px")
+```
+
+```{r}`r ''`
+# Summary table by N quantile and imputation method
+Summary_SchoolSize = Imputation_Summary_All_Methods_Global[,.("mean_pctbias" = mean(SGPB_Pct_Bias, na.rm = T),
+                                                          "mean_ci" = mean(SGPB_Coverage_Simp, na.rm = T),
+                                                          "mean_rawbias" = mean(SGPB_Raw_Bias, na.rm = T)),
+                                                           keyby = .(N_QUANT, IMP_METHOD)] 
+boldrows = which(Summary_SchoolSize$mean_pctbias < 5 & Summary_SchoolSize$mean_ci > 0.9)
+kable(Summary_SchoolSize, format = "html", digits = 3, col.names = c("Aggregated School Size Quantile", "Imputation Method", 
+                                                   "Mean Percent Bias", "Mean CI Coverage Rate", "Mean Raw Bias"),
+        caption = "Summary statistics by grade/content area size quantile and imputation method") %>%
+   kable_styling(bootstrap_options = "striped", full_width = F)  %>%
+   row_spec(boldrows, bold = T, color = "red") %>%
+   scroll_box(height = "500px")
+```
+
+## Raw Bias
+
+```{r outwidth = "80%", fig.align = "center"}`r ''`
+# Box plot of raw bias
+ggplot(Imputation_Summary_All_Methods_GC, aes(x = IMP_METHOD, y = SGPB_Raw_Bias)) +
+  geom_boxplot() + coord_flip() +
+  labs(x = "Imputation Method", y = "Raw Scale Score Bias (Imputed - Complete)") +
+  ggtitle("Raw Scale Score Bias By Imputation Method") +
+  theme(plot.title = element_text(hjust = 0.5)) + 
+  ylim(c(-40, 40))
+```
+
+### Grade by Content Area
+
+```{r out.width = "80%", fig.align = "center"}`r ''`
+# Box plot of raw bias, faceting by grade
+ggplot(Imputation_Summary_All_Methods_GC, aes(x = GRADE, y = SGPB_Raw_Bias, fill = IMP_METHOD)) +
+  geom_boxplot() + coord_flip() +
+  labs(x = "Grade", y = "Raw Scale Score Bias (Imputed - Complete)") +
+  ggtitle("Raw Scale Score Bias By Grade and Imputation Method") +
+  guides(fill = guide_legend(title = "Imputation \nMethod")) +
+  theme(plot.title = element_text(hjust = 0.5)) + 
+  scale_fill_brewer(palette="Dark2") + 
+  ylim(c(-40, 40))
+
+# Box plot of raw bias, faceting by content area
+ggplot(Imputation_Summary_All_Methods_GC, aes(x = CONTENT_AREA, y = SGPB_Raw_Bias, fill = IMP_METHOD)) +
+  geom_boxplot() + coord_flip() +
+  labs(x = "Content Area", y = "Raw Scale Score Bias (Imputed - Complete)") +
+  ggtitle("Raw Scale Score Bias By Content Area and Imputation Method") +
+  guides(fill = guide_legend(title = "Imputation \nMethod")) +
+  theme(plot.title = element_text(hjust = 0.5)) + 
+  scale_fill_brewer(palette="Dark2") + 
+  ylim(c(-40, 40))
+
+# Box plot of raw bias, faceting by grade and content area
+ggplot(Imputation_Summary_All_Methods_GC, aes(x = CONTENT_AREA, y = SGPB_Raw_Bias, fill = IMP_METHOD)) +
+  geom_boxplot() + coord_flip() +
+  labs(x = "Content Area", y = "Raw Scale Score Bias (Imputed - Complete)") +
+  ggtitle("Raw Scale Score Bias By Grade, Content Area, and Imputation Method") +
+  facet_wrap(~GRADE) +
+  guides(fill = guide_legend(title = "Imputation \nMethod")) +
+  theme(plot.title = element_text(hjust = 0.5)) + 
+  scale_fill_brewer(palette="Dark2") + 
+  ylim(c(-40, 40))
+```
+
+### School Size
+
+We next examine raw bias as a function of the school size. School size is either partitioned by grade/content area ($N_{GC}$) or aggregated at the full school level ($N_S$).
+
+```{r outwidth = "80%"}`r ''`
+# Scatterplot of raw bias as a function of N
+# Using different colors for imputation method
+Imputation_Summary_All_Methods_GC[order(N)] %>%
+ggplot(aes(x = N, y = SGPB_Raw_Bias, color = IMP_METHOD)) +
+  geom_point() +
+  labs(x = "Grade/Content Area Size", y = "Raw Scale Score Bias (Imputed - Complete)") +
+  ggtitle("Raw Scale Score Bias \nAs a Function of Grade/Content Area School Size") +
+  guides(color = guide_legend(title = "Imputation \nMethod")) +
+  theme(plot.title = element_text(hjust = 0.5)) + 
+  scale_color_brewer(palette="Dark2") +
+  geom_hline(aes(yintercept = 0), color = "#999999")
+
+# Scatterplot of raw bias as a function of N
+# Faceting by imputation method
+Imputation_Summary_All_Methods_GC[order(N)] %>%
+ggplot(aes(x = N, y = SGPB_Raw_Bias, color = IMP_METHOD)) +
+  geom_point() +
+  labs(x = "Grade/Content Area Size", y = "Raw Scale Score Bias (Imputed - Complete)") +
+  ggtitle("Raw Scale Score Bias \nAs a Function of Grade/Content Area School Size \nFaceting by Imputation Method") +
+  theme(legend.position = "none") +
+  facet_wrap(~IMP_METHOD) +
+  theme(plot.title = element_text(hjust = 0.5)) + 
+  scale_color_brewer(palette="Dark2") +
+  geom_hline(aes(yintercept = 0), color = "#999999")
+
+# Scatterplot of conditional mean raw bias based on grade/content area size
+Imputation_Summary_All_Methods_GC[, .("condmean" = mean(SGPB_Raw_Bias)), keyby = .(N, IMP_METHOD)] %>%
+  ggplot(aes(x = N, y = condmean, color = IMP_METHOD)) +
+  geom_point() +
+  labs(x = "Grade/Content Area Size", y = "Conditional Mean Raw Bias") +
+  ggtitle("Mean Raw Scale Score Bias \nConditioning on Grade/Content Area Size") +
+  theme(legend.position = "none") +
+  facet_wrap(~IMP_METHOD) + 
+  theme(plot.title = element_text(hjust = 0.5)) + 
+  scale_color_brewer(palette="Dark2")
+
+# Scatterplot of average bias as a function of aggregated N
+# Using different colors for imputation method
+ggplot(Imputation_Summary_All_Methods_Global, aes(x = N, y = SGPB_Raw_Bias, color = IMP_METHOD)) +
+  geom_point() +
+  labs(x = "Aggregated School Size (Summing across Grade and Content Area)", y = "Raw Scale Score Bias (Imputed - Complete)") +
+  ggtitle("Mean Scale Score Bias \nAs a Function of Aggregated School Size") +
+  guides(color = guide_legend(title = "Imputation \nMethod")) +
+  theme(plot.title = element_text(hjust = 0.5)) + 
+  scale_color_brewer(palette="Dark2") +
+  geom_hline(aes(yintercept = 0), color = "#999999")
+
+# Scatterplot of average bias as a function of aggregated N
+# Faceting by imputation method
+ggplot(Imputation_Summary_All_Methods_Global, aes(x = N, y = SGPB_Raw_Bias, color = IMP_METHOD)) +
+  geom_point() +
+  labs(x = "Aggregated School Size (Summing across Grade and Content Area)", y = "Raw Scale Score Bias (Imputed - Complete)") +
+  ggtitle("Mean Scale Score Bias \nAs a Function of Aggregated School Size \nFaceting by Imputation Method") +
+  theme(legend.position = "none") +
+  facet_wrap(~IMP_METHOD) +
+  theme(plot.title = element_text(hjust = 0.5)) + 
+  scale_color_brewer(palette="Dark2") +
+  geom_hline(aes(yintercept = 0), color = "#999999")
+
+# Scatterplot of conditional mean raw bias based on grade/content area size
+Imputation_Summary_All_Methods_Global[, .("condmean" = mean(SGPB_Raw_Bias)), keyby = .(N, IMP_METHOD)] %>%
+  ggplot(aes(x = N, y = condmean, color = IMP_METHOD)) +
+  geom_point() +
+  labs(x = "Aggregated School Size (Summing across Grade and Content Area)", y = "Conditional Mean Raw Bias") +
+  ggtitle("Mean Raw Scale Score Bias \nConditioning on Aggregated School Size") +
+  theme(legend.position = "none") +
+  facet_wrap(~IMP_METHOD) + 
+  theme(plot.title = element_text(hjust = 0.5)) + 
+  scale_color_brewer(palette="Dark2")
+
+# Scatterplot of absolute bias as a function of N
+# Using different colors for imputation method
+Imputation_Summary_All_Methods_GC[order(N)] %>%
+ggplot(aes(x = N, y = abs(SGPB_Raw_Bias), color = IMP_METHOD)) +
+  geom_point() +
+  labs(x = "Grade/Content Area Size", y = "Absolute Scale Score Bias (|Imputed - Complete|)") +
+  ggtitle("Absolute Scale Score Bias \nAs a Function of Grade/Content Area School Size") +
+  guides(color = guide_legend(title = "Imputation \nMethod")) +
+  theme(plot.title = element_text(hjust = 0.5)) + 
+  scale_color_brewer(palette="Dark2")
+
+# Scatterplot of absolute bias as a function of N
+# Faceting by imputation method
+Imputation_Summary_All_Methods_GC[order(N)] %>%
+ggplot(aes(x = N, y = abs(SGPB_Raw_Bias), color = IMP_METHOD)) +
+  geom_point() +
+  labs(x = "Grade/Content Area Size", y = "Absolute Scale Score Bias (|Imputed - Complete|)") +
+  ggtitle("Absolute Scale Score Bias \nAs a Function of Grade/Content Area School Size \nFaceting by Imputation Method") +
+  theme(legend.position = "none") +
+  facet_wrap(~IMP_METHOD) +
+  theme(plot.title = element_text(hjust = 0.5)) + 
+  scale_color_brewer(palette="Dark2")
+
+# Scatterplot of conditional mean absolute bias based on grade/content area size
+Imputation_Summary_All_Methods_GC[, .("condmean" = mean(abs(SGPB_Raw_Bias))), keyby = .(N, IMP_METHOD)] %>%
+  ggplot(aes(x = N, y = condmean, color = IMP_METHOD)) +
+  geom_point() +
+  labs(x = "Grade/Content Area Size", y = "Conditional Mean Absolute Bias") +
+  ggtitle("Mean Absolute Scale Score Bias \nConditioning on Grade/Content Area Size") +
+  theme(legend.position = "none") +
+  facet_wrap(~IMP_METHOD) + 
+  theme(plot.title = element_text(hjust = 0.5)) + 
+  scale_color_brewer(palette="Dark2")
+
+# Scatterplot of average bias as a function of aggregated N
+# Using different colors for imputation method
+ggplot(Imputation_Summary_All_Methods_Global, aes(x = N, y = abs(SGPB_Raw_Bias), color = IMP_METHOD)) +
+  geom_point() +
+  labs(x = "Aggregated School Size (Summing across Grade and Content Area)", y = "Absolute Scale Score Bias (|Imputed - Complete|)") +
+  ggtitle("Mean Absolute Scale Score Bias \nAs a Function of Aggregated School Size") +
+  guides(color = guide_legend(title = "Imputation \nMethod")) +
+  theme(plot.title = element_text(hjust = 0.5)) + 
+  scale_color_brewer(palette="Dark2")
+
+# Scatterplot of average absolute bias as a function of aggregated N
+# Faceting by imputation method
+ggplot(Imputation_Summary_All_Methods_Global, aes(x = N, y = abs(SGPB_Raw_Bias), color = IMP_METHOD)) +
+  geom_point() +
+  labs(x = "Aggregated School Size (Summing across Grade and Content Area)", y = "Absolute Scale Score Bias (|Imputed - Complete|)") +
+  ggtitle("Mean Absolute Scale Score Bias \nAs a Function of Aggregated School Size \nFaceting by Imputation Method") +
+  theme(legend.position = "none") +
+  facet_wrap(~IMP_METHOD) +
+  theme(plot.title = element_text(hjust = 0.5)) + 
+  scale_color_brewer(palette="Dark2")
+
+# Scatterplot of conditional mean absolute bias based on school size
+Imputation_Summary_All_Methods_Global[, .("condmean" = mean(abs(SGPB_Raw_Bias))), keyby = .(N, IMP_METHOD)] %>%
+  ggplot(aes(x = N, y = condmean, color = IMP_METHOD)) +
+  geom_point() +
+  labs(x = "Aggregated School Size (Summing across Grade and Content Area)", y = "Conditional Mean Absolute Bias") +
+  ggtitle("Mean Absolute Scale Score Bias \nConditioning on Aggregated School Size") +
+  theme(legend.position = "none") +
+  facet_wrap(~IMP_METHOD) + 
+  theme(plot.title = element_text(hjust = 0.5)) + 
+  scale_color_brewer(palette="Dark2")
+```
+
+Next, we can further facet by grade.
+
+```{r outwidth = "80%"}`r ''`
+# Scatterplot of raw bias by N
+# Facet by grade
+Imputation_Summary_All_Methods_GC[order(N)] %>%
+ggplot(aes(x = N, y = SGPB_Raw_Bias, color = IMP_METHOD)) +
+  geom_point() +
+  labs(x = "Grade/Content Area Size", y = "Raw Scale Score Bias (Imputed - Complete)") +
+  ggtitle("Raw Scale Score Bias \nAs a Function of Grade/Content Area School Size \nFaceting by Grade") +
+  guides(color = guide_legend(title = "Imputation \nMethod")) +
+  facet_wrap(~GRADE) +
+  theme(plot.title = element_text(hjust = 0.5)) + 
+  scale_color_brewer(palette="Dark2") +
+  geom_hline(aes(yintercept = 0), color = "#999999")
+
+# Scatterplot of absolute bias by N
+# Facet by grade
+Imputation_Summary_All_Methods_GC[order(N)] %>%
+ggplot(aes(x = N, y = abs(SGPB_Raw_Bias), color = IMP_METHOD)) +
+  geom_point() +
+  labs(x = "Grade/Content Area Size", y = "Absolute Scale Score Bias (|Imputed - Complete|)") +
+  ggtitle("Absolute Scale Score Bias \nAs a Function of Grade/Content Area School Size \nFaceting by Grade") +
+  guides(color = guide_legend(title = "Imputation \nMethod")) +
+  facet_wrap(~GRADE) +
+  theme(plot.title = element_text(hjust = 0.5)) + 
+  scale_color_brewer(palette="Dark2")
+```
+
+### Percent Missing
+
+```{r outwidth = "80%"}`r ''`
+# Scatterplot of raw bias as a function of percent missing
+# Using different colors for imputation method
+Imputation_Summary_All_Methods_GC[order(Percent_Missing)] %>%
+ggplot(aes(x = Percent_Missing, y = SGPB_Raw_Bias, color = IMP_METHOD)) +
+  geom_point() +
+  labs(x = "Percentage Missing", y = "Raw Scale Score Bias (Imputed - Complete)") +
+  ggtitle("Raw Scale Score Bias \nAs a Function of Percentage Missing") +
+  guides(color = guide_legend(title = "Imputation \nMethod")) +
+  theme(plot.title = element_text(hjust = 0.5)) + 
+  scale_color_brewer(palette="Dark2") +
+  geom_hline(aes(yintercept = 0), color = "#999999")
+
+# Scatterplot of raw bias as a function of percent missing
+# Faceting by imputation method
+Imputation_Summary_All_Methods_GC[order(Percent_Missing)] %>%
+ggplot(aes(x = Percent_Missing, y = SGPB_Raw_Bias, color = IMP_METHOD)) +
+  geom_point() +
+  labs(x = "Percentage Missing", y = "Raw Scale Score Bias (Imputed - Complete)") +
+  ggtitle("Raw Scale Score Bias \nAs a Function of Percentage Missing \nFaceting by Imputation Method") +
+  theme(legend.position = "none") +
+  facet_wrap(~IMP_METHOD) +
+  theme(plot.title = element_text(hjust = 0.5)) + 
+  scale_color_brewer(palette="Dark2") +
+  geom_hline(aes(yintercept = 0), color = "#999999")
+
+# Scatterplot of absolute bias as a function of percent missing
+# Using different colors for imputation method
+Imputation_Summary_All_Methods_GC[order(Percent_Missing)] %>%
+ggplot(aes(x = Percent_Missing, y = abs(SGPB_Raw_Bias), color = IMP_METHOD)) +
+  geom_point() +
+  labs(x = "Percentage Missing", y = "Absolute Scale Score Bias (|Imputed - Complete|)") +
+  ggtitle("Absolute Scale Score Bias \nAs a Function of Percentage Missing") +
+  guides(color = guide_legend(title = "Imputation \nMethod")) +
+  theme(plot.title = element_text(hjust = 0.5)) + 
+  scale_color_brewer(palette="Dark2")
+
+# Scatterplot of absolute bias as a function of N
+# Faceting by imputation method
+Imputation_Summary_All_Methods_GC[order(Percent_Missing)] %>%
+ggplot(aes(x = Percent_Missing, y = abs(SGPB_Raw_Bias), color = IMP_METHOD)) +
+  geom_point() +
+  labs(x = "Percentage Missing", y = "Absolute Scale Score Bias (|Imputed - Complete|)") +
+  ggtitle("Absolute Scale Score Bias \nAs a Function of Percentage Missing \nFaceting by Imputation Method") +
+  theme(legend.position = "none") +
+  facet_wrap(~IMP_METHOD) +
+  theme(plot.title = element_text(hjust = 0.5)) + 
+  scale_color_brewer(palette="Dark2")
+
+# Scatterplot of raw bias by percent missing
+# Facet by grade
+Imputation_Summary_All_Methods_GC[order(Percent_Missing)] %>%
+ggplot(aes(x = Percent_Missing, y = SGPB_Raw_Bias, color = IMP_METHOD)) +
+  geom_point() +
+  labs(x = "Grade/Content Area Size", y = "Raw Scale Score Bias (Imputed - Complete)") +
+  ggtitle("Raw Scale Score Bias \nAs a Function of Percentage Missing \nFaceting by Grade") +
+  guides(color = guide_legend(title = "Imputation \nMethod")) +
+  facet_wrap(~GRADE) +
+  theme(plot.title = element_text(hjust = 0.5)) + 
+  scale_color_brewer(palette="Dark2") +
+  geom_hline(aes(yintercept = 0), color = "#999999")
+
+# Scatterplot of absolute bias by percent missing
+# Facet by grade
+Imputation_Summary_All_Methods_GC[order(Percent_Missing)] %>%
+ggplot(aes(x = Percent_Missing, y = abs(SGPB_Raw_Bias), color = IMP_METHOD)) +
+  geom_point() +
+  labs(x = "Grade/Content Area Size", y = "Absolute Scale Score Bias (|Imputed - Complete|)") +
+  ggtitle("Absolute Scale Score Bias \nAs a Function of Percentage Missing \nFaceting by Grade") +
+  guides(color = guide_legend(title = "Imputation \nMethod")) +
+  facet_wrap(~GRADE) +
+  theme(plot.title = element_text(hjust = 0.5)) + 
+  scale_color_brewer(palette="Dark2")
+
+# Bubble chart with N and percent missing
+# Faceting by imputation method
+Imputation_Summary_All_Methods_GC[order(N)] %>%
+ggplot(aes(x = N, y = SGPB_Raw_Bias, color = IMP_METHOD)) +
+  geom_point(aes(color = IMP_METHOD, size = Percent_Missing, alpha = 0.6)) +
+  labs(x = "School Size (By Grade and Content Area)", y = "Raw Scale Score Bias (Imputed - Complete)") +
+  ggtitle("Raw Scale Score Bias \nAs a Function of Grade/Content Area School Size and Percent Missing") +
+  theme(legend.position = "none") +
+  facet_wrap(~IMP_METHOD) +
+  theme(plot.title = element_text(hjust = 0.5)) + 
+  scale_color_brewer(palette="Dark2") +
+  geom_hline(aes(yintercept = 0), color = "#999999")
+
+# Bubble chart with aggregated N and percent missing
+# Faceting by imputation method
+ggplot(Imputation_Summary_All_Methods_Global, aes(x = N, y = SGPB_Raw_Bias, color = IMP_METHOD)) +
+  geom_point(aes(color = IMP_METHOD, size = Percent_Missing, alpha = 0.6)) +
+  labs(x = "Aggregated School Size (Summing across Grade and Content Area)", y = "Raw Scale Score Bias (Imputed - Complete)") +
+  ggtitle("Raw Scale Score Bias \nAs a Function of Aggregated School Size and Average Percent Missing") +
+  theme(legend.position = "none") +
+  facet_wrap(~IMP_METHOD) +
+  theme(plot.title = element_text(hjust = 0.5)) + 
+  scale_color_brewer(palette="Dark2") +
+  geom_hline(aes(yintercept = 0), color = "#999999")
+```
+
+## Simplified CI Coverage Rates
+
+```{r outwidth = "80%", fig.align = "center"}`r ''`
+# Box plot of simplified CI coverage
+ggplot(Imputation_Summary_All_Methods_GC, aes(x = IMP_METHOD, y = SGPB_Coverage_Simp)) +
+  geom_boxplot() + coord_flip() +
+  labs(x = "Imputation Method", y = "Simplified CI Coverage") +
+  ggtitle("Simplified CI Coverage By Imputation Method") +
+  theme(plot.title = element_text(hjust = 0.5)) 
+```
+
+### Grade by Content Area
+
+```{r out.width = "80%", fig.align = "center"}`r ''`
+# Box plot of simplified CI coverage, faceting by grade
+ggplot(Imputation_Summary_All_Methods_GC, aes(x = GRADE, y = SGPB_Coverage_Simp, fill = IMP_METHOD)) +
+  geom_boxplot() + coord_flip() +
+  labs(x = "Grade", y = "Simplified CI Coverage Rate") +
+  ggtitle("Simplified CI Coverage Rate By Grade and Imputation Method") +
+  guides(fill = guide_legend(title = "Imputation \nMethod")) +
+  theme(plot.title = element_text(hjust = 0.5)) + 
+  scale_fill_brewer(palette="Dark2") 
+
+# Box plot of simplified CI coverage, faceting by content area
+ggplot(Imputation_Summary_All_Methods_GC, aes(x = CONTENT_AREA, y = SGPB_Coverage_Simp, fill = IMP_METHOD)) +
+  geom_boxplot() + coord_flip() +
+  labs(x = "Content Area", y = "Simplified CI Coverage Rate") +
+  ggtitle("Simplified CI Coverage Rate By Content Area and Imputation Method") +
+  guides(fill = guide_legend(title = "Imputation \nMethod")) +
+  theme(plot.title = element_text(hjust = 0.5)) + 
+  scale_fill_brewer(palette="Dark2") 
+
+# Box plot of simplified CI coverage, faceting by grade and content area
+ggplot(Imputation_Summary_All_Methods_GC, aes(x = CONTENT_AREA, y = SGPB_Coverage_Simp, fill = IMP_METHOD)) +
+  geom_boxplot() + coord_flip() +
+  labs(x = "Content Area", y = "Simplified CI Coverage Rate") +
+  ggtitle("Simplified CI Coverage Rate By \nGrade, Content Area, and Imputation Method") +
+  facet_wrap(~GRADE) +
+  guides(fill = guide_legend(title = "Imputation \nMethod")) +
+  theme(plot.title = element_text(hjust = 0.5)) + 
+  scale_fill_brewer(palette="Dark2") 
+```
+
+### School Size
+
+```{r outwidth = "80%"}`r ''`
+# Scatterplot of average coverage rate as a function of aggregated N
+# Using different colors for imputation method
+ggplot(Imputation_Summary_All_Methods_Global, aes(x = N, y = SGPB_Coverage_Simp, color = IMP_METHOD)) +
+  geom_point() +
+  labs(x = "Aggregated School Size (Summing across Grade and Content Area)", y = "Simplified CI Coverage Rate") +
+  ggtitle("Simplified CI Coverage Rate \nAs a Function of Aggregated School Size") +
+  guides(color = guide_legend(title = "Imputation \nMethod")) +
+  theme(plot.title = element_text(hjust = 0.5)) + 
+  scale_color_brewer(palette="Dark2")
+
+# Scatterplot of average coverage rate as a function of aggregated N
+# Faceting by imputation method
+ggplot(Imputation_Summary_All_Methods_Global, aes(x = N, y = SGPB_Coverage_Simp, color = IMP_METHOD)) +
+  geom_point() +
+  labs(x = "Aggregated School Size (Summing across Grade and Content Area)", y = "Simplified CI Coverage Rate") +
+  ggtitle("Simplified CI Coverage Rate \nAs a Function of Aggregated School Size \nFaceting by Imputation Method") +
+  theme(legend.position = "none") +
+  facet_wrap(~IMP_METHOD) +
+  theme(plot.title = element_text(hjust = 0.5)) + 
+  scale_color_brewer(palette="Dark2")
+
+# Scatterplot of conditional mean coverage rate based on school size
+Imputation_Summary_All_Methods_Global[, .("condmean" = mean(SGPB_Coverage_Simp)), keyby = .(N, IMP_METHOD)] %>%
+  ggplot(aes(x = N, y = condmean, color = IMP_METHOD)) +
+  geom_point() +
+  labs(x = "Aggregated School Size (Summing across Grade and Content Area)", y = "Conditional Mean Raw Bias") +
+  ggtitle("Mean Simplified CI Coverage Rate \nConditioning on Aggregated School Size") +
+  theme(legend.position = "none") +
+  facet_wrap(~IMP_METHOD) + 
+  theme(plot.title = element_text(hjust = 0.5)) + 
+  scale_color_brewer(palette="Dark2")
+```
+
+### Percent Missing
+
+Next, we look at simplified CI coverage rate as a function of the percent missing. 
+
+```{r outwidth = "80%"}`r ''`
+# Scatterplot of simplified CI coverage rate as a function of percent missing
+# Using different colors for imputation method
+Imputation_Summary_All_Methods_GC[order(Percent_Missing)] %>%
+ggplot(aes(x = Percent_Missing, y = SGPB_Coverage_Simp, color = IMP_METHOD)) +
+  geom_point() +
+  labs(x = "Percentage Missing", y = "Simplified CI Coverage Rate") +
+  ggtitle("Simplified CI Coverage Rate \nAs a Function of Percentage Missing") +
+  guides(color = guide_legend(title = "Imputation \nMethod")) +
+  theme(plot.title = element_text(hjust = 0.5)) + 
+  scale_color_brewer(palette="Dark2")
+
+# Scatterplot of simplified CI coverage rate as a function of percent missing
+# Faceting by imputation method
+Imputation_Summary_All_Methods_GC[order(Percent_Missing)] %>%
+ggplot(aes(x = Percent_Missing, y = SGPB_Coverage_Simp, color = IMP_METHOD)) +
+  geom_point() +
+  labs(x = "Percentage Missing", y = "Simplified CI Coverage Rate") +
+  ggtitle("Simplified CI Coverage Rate \nAs a Function of Percentage Missing \nFaceting by Imputation Method") +
+  theme(legend.position = "none") +
+  facet_wrap(~IMP_METHOD) +
+  theme(plot.title = element_text(hjust = 0.5)) + 
+  scale_color_brewer(palette="Dark2")
+
+# Bubble chart with aggregated N and percent missing
+# Faceting by imputation method
+ggplot(Imputation_Summary_All_Methods_Global, aes(x = N, y = SGPB_Coverage_Simp, color = IMP_METHOD)) +
+  geom_point(aes(color = IMP_METHOD, size = Percent_Missing, alpha = 0.6)) +
+  labs(x = "Aggregated School Size (Summing across Grade and Content Area)", y = "Simplified CI Coverage Rate") +
+  ggtitle("Simplified CI Coverage Rate \nAs a Function of Aggregated School Size and Average Percent Missing") +
+  theme(legend.position = "none") +
+  facet_wrap(~IMP_METHOD) +
+  theme(plot.title = element_text(hjust = 0.5)) + 
+  scale_color_brewer(palette="Dark2")
+```
+
+## Percent Bias
+
+```{r outwidth = "80%", fig.align = "center"}`r ''`
+# Box plot of percent bias
+ggplot(Imputation_Summary_All_Methods_GC, aes(x = IMP_METHOD, y = SGPB_Pct_Bias)) +
+  geom_boxplot() + coord_flip() +
+  labs(x = "Imputation Method", y = "Percent Bias (%)") +
+  ggtitle("Percent Bias By Imputation Method") +
+  theme(plot.title = element_text(hjust = 0.5)) 
+```
+
+### Grade by Content Area
+
+```{r out.width = "80%", fig.align = "center"}`r ''`
+# Box plot of percent bias, faceting by grade
+ggplot(Imputation_Summary_All_Methods_GC, aes(x = GRADE, y = SGPB_Pct_Bias, fill = IMP_METHOD)) +
+  geom_boxplot() + coord_flip() +
+  labs(x = "Grade", y = "Percent Bias (%)") +
+  ggtitle("Percent Bias By Grade and Imputation Method") +
+  guides(fill = guide_legend(title = "Imputation \nMethod")) +
+  theme(plot.title = element_text(hjust = 0.5)) + 
+  scale_fill_brewer(palette="Dark2") 
+
+# Box plot of percent bias, faceting by content area
+ggplot(Imputation_Summary_All_Methods_GC, aes(x = CONTENT_AREA, y = SGPB_Pct_Bias, fill = IMP_METHOD)) +
+  geom_boxplot() + coord_flip() +
+  labs(x = "Content Area", y = "Percent Bias (%)") +
+  ggtitle("Percent Bias By Content Area and Imputation Method") +
+  guides(fill = guide_legend(title = "Imputation \nMethod")) +
+  theme(plot.title = element_text(hjust = 0.5)) + 
+  scale_fill_brewer(palette="Dark2") 
+
+# Box plot of percent bias, faceting by grade and content area
+ggplot(Imputation_Summary_All_Methods_GC, aes(x = CONTENT_AREA, y = SGPB_Pct_Bias, fill = IMP_METHOD)) +
+  geom_boxplot() + coord_flip() +
+  labs(x = "Content Area", y = "Percent Bias (%)") +
+  ggtitle("Percent Bias By \nGrade, Content Area, and Imputation Method") +
+  facet_wrap(~GRADE) +
+  guides(fill = guide_legend(title = "Imputation \nMethod")) +
+  theme(plot.title = element_text(hjust = 0.5)) + 
+  scale_fill_brewer(palette="Dark2") 
+```
+
+### School Size
+
+We next examine percent bias as a function of the school size. Here, school size is again only aggregated at the full school level ($N_S$). 
+
+```{r outwidth = "80%"}`r ''`
+# Scatterplot of average SS percent bias as a function of aggregated N
+# Using different colors for imputation method
+ggplot(Imputation_Summary_All_Methods_Global, aes(x = N, y = SGPB_Pct_Bias, color = IMP_METHOD)) +
+  geom_point() +
+  labs(x = "Aggregated School Size (Summing across Grade and Content Area)", y = "Percent Bias (%)") +
+  ggtitle("Percent Bias \nAs a Function of Aggregated School Size") +
+  guides(color = guide_legend(title = "Imputation \nMethod")) +
+  theme(plot.title = element_text(hjust = 0.5)) + 
+  scale_color_brewer(palette="Dark2")
+
+# Scatterplot of average SS percent bias as a function of aggregated N
+# Faceting by imputation method
+ggplot(Imputation_Summary_All_Methods_Global, aes(x = N, y = SGPB_Pct_Bias, color = IMP_METHOD)) +
+  geom_point() +
+  labs(x = "Aggregated School Size (Summing across Grade and Content Area)", y = "Percent Bias (%)") +
+  ggtitle("Percent Bias \nAs a Function of Aggregated School Size \nFaceting by Imputation Method") +
+  theme(legend.position = "none") +
+  facet_wrap(~IMP_METHOD) +
+  theme(plot.title = element_text(hjust = 0.5)) + 
+  scale_color_brewer(palette="Dark2")
+
+# Scatterplot of conditional mean percent bias based on school size
+Imputation_Summary_All_Methods_Global[, .("condmean" = mean(SGPB_Pct_Bias)), keyby = .(N, IMP_METHOD)] %>%
+  ggplot(aes(x = N, y = condmean, color = IMP_METHOD)) +
+  geom_point() +
+  labs(x = "Aggregated School Size (Summing across Grade and Content Area)", y = "Conditional Mean Raw Bias") +
+  ggtitle("Mean Percent Bias \nConditioning on Aggregated School Size") +
+  theme(legend.position = "none") +
+  facet_wrap(~IMP_METHOD) + 
+  theme(plot.title = element_text(hjust = 0.5)) + 
+  scale_color_brewer(palette="Dark2")
+```
+
+### Percent Missing
+
+We now look at percent bias as a function of the percent missing. 
+
+```{r outwidth = "80%"}`r ''`
+# Scatterplot of percent bias as a function of percent missing
+# Using different colors for imputation method
+Imputation_Summary_All_Methods_GC[order(Percent_Missing)] %>%
+ggplot(aes(x = Percent_Missing, y = SGPB_Pct_Bias, color = IMP_METHOD)) +
+  geom_point() +
+  labs(x = "Percentage Missing", y = "Percent Bias (%)") +
+  ggtitle("Percent Bias \nAs a Function of Percentage Missing") +
+  guides(color = guide_legend(title = "Imputation \nMethod")) +
+  theme(plot.title = element_text(hjust = 0.5)) + 
+  scale_color_brewer(palette="Dark2")
+
+# Scatterplot of percent bias as a function of percent missing
+# Faceting by imputation method
+Imputation_Summary_All_Methods_GC[order(Percent_Missing)] %>%
+ggplot(aes(x = Percent_Missing, y = SGPB_Pct_Bias, color = IMP_METHOD)) +
+  geom_point() +
+  labs(x = "Percentage Missing", y = "Percent Bias (%)") +
+  ggtitle("Percent Bias \nAs a Function of Percentage Missing \nFaceting by Imputation Method") +
+  theme(legend.position = "none") +
+  facet_wrap(~IMP_METHOD) +
+  theme(plot.title = element_text(hjust = 0.5)) + 
+  scale_color_brewer(palette="Dark2")
+
+# Bubble chart with aggregated N and percent missing
+# Faceting by imputation method
+ggplot(Imputation_Summary_All_Methods_Global, aes(x = N, y = SGPB_Pct_Bias, color = IMP_METHOD)) +
+  geom_point(aes(color = IMP_METHOD, size = Percent_Missing, alpha = 0.6)) +
+  labs(x = "Aggregated School Size (Summing across Grade and Content Area)", y = "Percent Bias (%)") +
+  ggtitle("Percent Bias \nAs a Function of Aggregated School Size and Average Percent Missing") +
+  theme(legend.position = "none") +
+  facet_wrap(~IMP_METHOD) +
+  theme(plot.title = element_text(hjust = 0.5)) + 
+  scale_color_brewer(palette="Dark2")
+```
+
+## Explanatory Analyses
+
+### Raw Bias
+
+Here, we fit a series of linear fixed-effects regression models using the `fixest` package (Berge, 2018). The outcome of interest is raw bias, and three sets of predictors are examined: (a) imputation method only, (b) an additive model with imputation method, grade/content area or school size, and percentage missing, and (c) two-way interactions among the predictors in model B. The first set of models analyzes data at the grade/content area level. 
+
+```{r echo = T}`r ''`
+# Fit models
+gc.raw.imp = feols(SGPB_Raw_Bias ~ i(IMP_METHOD, ref = "Observed") | 
+                   CONTENT_AREA^GRADE, Imputation_Summary_All_Methods_GC)
+gc.raw.add = feols(SGPB_Raw_Bias ~ N + Percent_Missing + i(IMP_METHOD, ref = "Observed") | 
+                   CONTENT_AREA^GRADE, 
+                   Imputation_Summary_All_Methods_GC)
+gc.raw.int = feols(SGPB_Raw_Bias ~ (N + Percent_Missing + i(IMP_METHOD, ref = "Observed"))^2 | 
+                   CONTENT_AREA^GRADE, 
+                   Imputation_Summary_All_Methods_GC)
+```
+
+```{r}`r ''`
+# Create table of results
+etable(gc.raw.imp, gc.raw.add, gc.raw.int, subtitles = c("A", "B", "C"),
+       fitstat = c('r2', 'ar2', 'war2', 'aic', 'bic'))[-c(1,2),] %>%
+  kable(format = "html", booktabs = T, row.names = T,
+        col.names = c("Imputation Method Only", "Additive Model", "Interaction Model"),
+        caption = "Linear fixed-effect regression models for raw bias at the grade/content area level") %>%
+  kable_classic_2("hover", full_width = F) %>%
+  scroll_box(height = "700px")
+```
+
+$~$
+
+The next set of models analyzes data at the school level.
+
+```{r echo = T}`r ''`
+# Fit models
+sc.raw.imp = feols(SGPB_Raw_Bias ~ i(IMP_METHOD, ref = "Observed"), 
+                   Imputation_Summary_All_Methods_Global)
+sc.raw.add = feols(SGPB_Raw_Bias ~ N + Percent_Missing + i(IMP_METHOD, ref = "Observed"), 
+                   Imputation_Summary_All_Methods_Global)
+sc.raw.int = feols(SGPB_Raw_Bias ~ (N + Percent_Missing + i(IMP_METHOD, ref = "Observed"))^2, 
+                   Imputation_Summary_All_Methods_Global)
+```
+
+```{r}`r ''`
+# Create table of results
+etable(sc.raw.imp, sc.raw.add, sc.raw.int, subtitles = c("A", "B", "C"),
+       fitstat = c('r2', 'ar2', 'war2', 'aic', 'bic'))[-c(1,2),] %>%
+  kable(format = "html", booktabs = T, row.names = T,
+        col.names = c("Imputation Method Only", "Additive Model", "Interaction Model"),
+        caption = "Linear fixed-effect regression models for raw bias at the school level") %>%
+  kable_classic_2("hover", full_width = F) %>%
+  scroll_box(height = "700px")
+```
+
+### Absolute Bias
+
+Now, absolute rather than raw bias is used to better understand the relationships among the aforementioned factors on the magnitude of differences between the true and imputed mean values. 
+
+```{r echo = T}`r ''`
+# Fit models
+gc.abs.imp = feols(abs(SGPB_Raw_Bias) ~ i(IMP_METHOD, ref = "Observed") | 
+                   CONTENT_AREA^GRADE, Imputation_Summary_All_Methods_GC)
+gc.abs.add = feols(abs(SGPB_Raw_Bias) ~ N + Percent_Missing + i(IMP_METHOD, ref = "Observed") | 
+                   CONTENT_AREA^GRADE, 
+                   Imputation_Summary_All_Methods_GC)
+gc.abs.int = feols(abs(SGPB_Raw_Bias) ~ (N + Percent_Missing + i(IMP_METHOD, ref = "Observed"))^2 | 
+                   CONTENT_AREA^GRADE, 
+                   Imputation_Summary_All_Methods_GC)
+```
+
+```{r}`r ''`
+# Create table of results
+etable(gc.abs.imp, gc.abs.add, gc.abs.int, subtitles = c("A", "B", "C"),
+       fitstat = c('r2', 'ar2', 'war2', 'aic', 'bic'))[-c(1,2),] %>%
+  kable(format = "html", booktabs = T, row.names = T,
+        col.names = c("Imputation Method Only", "Additive Model", "Interaction Model"),
+        caption = "Linear fixed-effect regression models for absolute bias at the grade/content area level") %>%
+  kable_classic_2("hover", full_width = F) %>%
+  scroll_box(height = "700px")
+```
+
+```{r echo = T}`r ''`
+# Fit models
+sc.abs.imp = feols(abs(SGPB_Raw_Bias) ~ i(IMP_METHOD, ref = "Observed"), 
+                   Imputation_Summary_All_Methods_Global)
+sc.abs.add = feols(abs(SGPB_Raw_Bias) ~ N + Percent_Missing + i(IMP_METHOD, ref = "Observed"), 
+                   Imputation_Summary_All_Methods_Global)
+sc.abs.int = feols(abs(SGPB_Raw_Bias) ~ (N + Percent_Missing + i(IMP_METHOD, ref = "Observed"))^2, 
+                   Imputation_Summary_All_Methods_Global)
+```
+
+```{r}`r ''`
+# Create table of results
+etable(sc.abs.imp, sc.abs.add, sc.abs.int, subtitles = c("A", "B", "C"),
+       fitstat = c('r2', 'ar2', 'war2', 'aic', 'bic'))[-c(1,2),] %>%
+  kable(format = "html", booktabs = T, row.names = T,
+        col.names = c("Imputation Method Only", "Additive Model", "Interaction Model"),
+        caption = "Linear fixed-effect regression models for absolute bias at the school level") %>%
+  kable_classic_2("hover", full_width = F) %>%
+  scroll_box(height = "700px")
+```
+
+### Coverage Rate 
+
+In the final section, the outcome of interest is the simplified CI coverage rate. With this outcome variable, logistic rather than linear fixed effects models are fit to the data.
+
+```{r echo = T}`r ''`
+# Fit models
+gc.cov.imp = feglm(SGPB_Coverage_Simp ~ i(IMP_METHOD, ref = "Observed") | 
+                   CONTENT_AREA^GRADE, 
+                   Imputation_Summary_All_Methods_GC, family = "binomial")
+gc.cov.add = feglm(SGPB_Coverage_Simp ~ N + Percent_Missing + i(IMP_METHOD, ref = "Observed") | 
+                   CONTENT_AREA^GRADE, 
+                   Imputation_Summary_All_Methods_GC, family = "binomial")
+gc.cov.int = feglm(SGPB_Coverage_Simp ~ (N + Percent_Missing + i(IMP_METHOD, ref = "Observed"))^2 | 
+                   CONTENT_AREA^GRADE, 
+                   Imputation_Summary_All_Methods_GC, family = "binomial")
+```
+
+```{r}`r ''`
+# Create table of results
+etable(gc.cov.imp, gc.cov.add, gc.cov.int, subtitles = c("A", "B", "C"),
+       fitstat = c('aic', 'bic'))[-c(1,2),] %>%
+  kable(format = "html", booktabs = T, row.names = T,
+        col.names = c("Imputation Method Only", "Additive Model", "Interaction Model"),
+        caption = "Logistic fixed-effect regression models for CI coverage rate at the grade/content area level") %>%
+  kable_classic_2("hover", full_width = F) %>%
+  scroll_box(height = "700px")
+```
+
+```{r echo = T}`r ''`
+# Fit models
+sc.cov.imp = feglm(SGPB_Coverage_Simp ~ i(IMP_METHOD, ref = "Observed"), 
+                   Imputation_Summary_All_Methods_Global, family = "binomial")
+sc.cov.add = feglm(SGPB_Coverage_Simp ~ N + Percent_Missing + i(IMP_METHOD, ref = "Observed"), 
+                   Imputation_Summary_All_Methods_Global, family = "binomial")
+sc.cov.int = feglm(SGPB_Coverage_Simp ~ (N + Percent_Missing + i(IMP_METHOD, ref = "Observed"))^2, 
+                   Imputation_Summary_All_Methods_Global, family = "binomial")
+```
+
+```{r}`r ''`
+# Create table of results
+etable(sc.cov.imp, sc.cov.add, sc.cov.int, subtitles = c("A", "B", "C"),
+       fitstat = c('aic', 'bic'))[-c(1,2),] %>%
+  kable(format = "html", booktabs = T, row.names = T,
+        col.names = c("Imputation Method Only", "Additive Model", "Interaction Model"),
+        caption = "Logistic fixed-effect regression models for CI coverage rate at the school level") %>%
+  kable_classic_2("hover", full_width = F) %>%
+  scroll_box(height = "700px")
+```
+
+````
