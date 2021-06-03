@@ -1,6 +1,5 @@
 ---
 title: "Internship Updates"
-date: "June 4th, 2021"
 ---
 
 ```{r, echo = FALSE}
@@ -15,17 +14,15 @@ if (is_html_output()) {
 
 # June 4th Internship Update
 
-Three weeks into the summer internship and plenty to report:
+Three weeks into the summer internship and there is already plenty to report!
 
-* Learning the tools of the trade: R package development, GitHub
-* Set up [GitHub based website](https://centerforassessment.github.io/Internship_2021/index.html), which you're looking at, to share results.
-* Presentation for the update can be found [here](https://centerforassessment.github.io/Internship_2021/articles/Internship_Presentation_Landing_Page.html)
-
+* Continually learning the tools of the trade with student growth percentile (SGP) analyses, R package development, and the GitHub workflow.
+* Summarized results from a simulation examining the efficacy of multiple imputation methods for missing assessment and growth data. 
+* With generous help, set up [this GitHub based website](https://centerforassessment.github.io/Internship_2021/index.html) to share results.
+* Presentation slides for the first internship update can be found [here](https://centerforassessment.github.io/Internship_2021/articles/Internship_Presentation_Landing_Page.html).
 
 
 # June 18th Internship Update
-
-
 
 
 # July 7th Internship Update

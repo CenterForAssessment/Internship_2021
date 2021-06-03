@@ -7,7 +7,7 @@ Center for Assessment Internship 2021
 # Introduction
 
 Welcome to [Allie Cooperman's](https://github.com/alliecooperman) Github repo for the 2021 summer internship with the
-[Center for Assessment](https://www.nciea.org)! This repo contains my work for the summer, including summary vignettes, analysis source code, and presentations that I made as part of my internship at the Center.
+[Center for Assessment](https://www.nciea.org)! I am extremely excited to be working this summer with Damian Betebenner and Adam Van Iwaarden. This repo contains my internship work, including summary vignettes, analysis source code, and presentations that I made as part of my internship at the Center.
 
 # My Background
 
