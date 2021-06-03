@@ -2,7 +2,8 @@ DESCRIPTION:
   Package: Internship 2021
   Title: Content created by Allie Cooperman as part of NCIEA Internship 2021 
   Authors@R: c(person(given=c("Allie"), family="Cooperman", email="coope782@umn.edu", role=c("aut", "cre")),
-           person(given=c("Damian", "W."), family="Betebenner", email="dbetebenner@nciea.org", role="aut"))
+           person(given=c("Damian", "W."), family="Betebenner", email="dbetebenner@nciea.org", role="aut"),
+           person(given=c("Adam", "R."), family="Van Iwaarden", email="avaniwaarden@nciea.org", role="aut"))
   License: GPL-3
   BugReports: https://github.com/CenterForAssessment/Internship_2021/issues
 
@@ -38,15 +39,10 @@ navbar:
         href: articles/Internship_Presentation_Landing_Page.html
     - text: News
       menu:
-      - text: "Internship notes"
-      - text: "First Update"
-        href: articles/releases/First_Update_Notes.html
-      - text: "Second Update"
-        href: articles/releases/Second_Update_Notes.html
-      - text: "Final Update"
-        href: articles/releases/Final_Update_Notes.html
+      - text: "Internship Updates"
+        href: articles/releases/Internship_Updates.html
     right:
       - icon: fab fa-github fa-2x
         href: https://github.com/centerforassessment/Internship_2021
       - icon: fab fa-twitter
-        href: https://twitter.com/intent/tweet?url=https%3A%2F%2Fcenterforassessment.github.io%2FInternship_2021%2F&via=NCIEA1&text=Content%20for%20Center%20for%20Assessment%20Internship%202021&hashtags=rstats%2CSGP
+        href: https://twitter.com/intent/tweet?url=https%3A%2F%2Fcenterforassessment.github.io%2FInternship_2021%2F&via=NCIEA1&text=Work%20for%20the%20Center%20for%20Assessment%20Internship%202021%20by%20Allie%20Cooperman&hashtags=rstats%2CSGP

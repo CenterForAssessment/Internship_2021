@@ -1,0 +1,31 @@
+---
+title: "Internship Updates"
+date: "June 4th, 2021"
+---
+
+```{r, echo = FALSE}
+is_html_output = function() {
+  knitr::opts_knit$get("rmarkdown.pandoc.to")=="html"
+}
+knitr::opts_chunk$set(collapse = TRUE, comment = "", prompt=TRUE, fig.dpi = 96)
+if (is_html_output()) {
+    options(width=1000)
+}
+```
+
+# June 4th Internship Update
+
+Three weeks into the summer internship and plenty to report:
+
+* Learning the tools of the trade: R package development, GitHub
+* Set up [GitHub based website](https://centerforassessment.github.io/Internship_2021/index.html), which you're looking at, to share results.
+* Presentation for the update can be found [here](https://centerforassessment.github.io/Internship_2021/articles/Internship_Presentation_Landing_Page.html)
+
+
+
+# June 18th Internship Update
+
+
+
+
+# July 7th Internship Update
