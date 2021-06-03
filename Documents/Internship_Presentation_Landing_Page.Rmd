@@ -11,7 +11,7 @@ output:
 
 The first presentation summarizes initial work on multiple imputation (MI) comparisons for calculating "adjusted" aggregate summary statistics. 
 
-* <a href="https://centerforassessment.github.io/Internship_2021/articles/CFA-Internship-Presentation__20210604.pdf" target="_blank">PDF Presentation Slides</a>
+* <a href="https://centerforassessment.github.io/Internship_2021/articles/CFA-Internship-Presentation_20210604.pdf" target="_blank">PDF Presentation Slides</a>
 
 
 # June 18th Internship Update
