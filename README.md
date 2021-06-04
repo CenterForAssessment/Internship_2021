@@ -7,11 +7,11 @@ Center for Assessment Internship 2021
 # Introduction
 
 Welcome to [Allie Cooperman's](https://github.com/alliecooperman) Github repo for the 2021 summer internship with the
-[Center for Assessment](https://www.nciea.org)! I am extremely excited to be working this summer with Damian Betebenner and Adam Van Iwaarden. This repo contains my internship work, including summary vignettes, analysis source code, and presentations that I made as part of my internship at the Center.
+[Center for Assessment](https://www.nciea.org)! I am extremely excited to be working this summer with [Damian Betebenner](https://github.com/dbetebenner) and [Adam Van Iwaarden](https://github.com/adamvi). This repo contains my internship work, including summary vignettes, analysis source code, and presentations that I made as part of my internship at the Center.
 
 # My Background
 
-I'm a Psychology PhD student at the University of Minnesota - Twin Cities (UMN), specializing in Quantitative and Psychometric Methods.
+I'm a Psychology PhD student at the [University of Minnesota - Twin Cities (UMN)](https://twin-cities.umn.edu/), specializing in [Quantitative and Psychometric Methods](https://cla.umn.edu/psychology/graduate/areas-specialization/quantitativepsychometric-methods-qpm).
 My research at UMN broadly encompasses latent variable modeling (e.g., factor analysis, item response theory), test bias, and longitudinal measurement.
 I'm particularly interested in the intersections of research and education policy, with a focus on using advanced quantitative methods to
 better understand children's educational achievement.
