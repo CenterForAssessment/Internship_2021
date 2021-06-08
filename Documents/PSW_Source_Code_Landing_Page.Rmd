@@ -1,0 +1,13 @@
+---
+title: "Source Code for Propensity Score Weighting Analyses"
+date: "Last Updated: June 8, 2021"
+output: html_document
+---
+
+# Analysis Summary
+
+Below is the source code that accompanies the propensity score weighting (PSW) vignette. PSW is a possible method for comparing aggregated educational assessment scores across years by balancing the samples on a set of important covariates. 
+
+# Example Vignette
+
+* Source code coming soon!

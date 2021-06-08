@@ -20,7 +20,8 @@ better understand children's educational achievement.
 
 My work this summer includes:
 
-* Comparing the efficacy of multiple imputation methods for scale scores and student growth percentiles when data are missing. 
+* Comparing the efficacy of multiple imputation methods for scale scores and student growth percentiles (SGPs) when data are missing.
+* Exploring the applicability of propensity score weighting for comparing scale scores and SGPs across years. 
 * Creating open-source reporting tools to evaluate academic growth.
 
 # Resources
