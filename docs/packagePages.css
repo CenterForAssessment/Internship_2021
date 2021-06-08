@@ -3199,7 +3199,7 @@ tbody.collapse.in {
   list-style: none;
   font-size: 15px;
   text-align: left;
-  background-color: rgba(236, 236, 119, 0.85);
+  background-color: #d2dc73d9;
   border: 1px solid #ccc;
   border: 1px solid rgba(0, 0, 0, 0.15);
   border-radius: 3px;
@@ -3962,7 +3962,7 @@ tbody.collapse.in {
     .navbar-right ~ .navbar-right {
       margin-right: 0; } }
 .navbar-default {
-  background-image: linear-gradient(to bottom, #f4f47e 0%, #cfe17e 100%);
+  background-image: linear-gradient(to bottom, #e8fb36 0%, #bbca2c 100%);
   border-color: transparent; }
   .navbar-default .navbar-brand {
     color: #444; }
@@ -3999,11 +3999,11 @@ tbody.collapse.in {
   .navbar-default .navbar-form {
     border-color: transparent; }
   .navbar-default .navbar-nav > .open > a, .navbar-default .navbar-nav > .open > a:hover, .navbar-default .navbar-nav > .open > a:focus {
-    background-color: #ecec77;
+    background-color: #d2dc73d9;
     color: #111;
-    border-left: 1px solid #d6d671;
-    border-right: 1px solid #d6d671;
-    border-top: 1px solid #d6d671;
+    border-left: 1px solid #cece29;
+    border-right: 1px solid #cece29;
+    border-top: 1px solid #cece29;
     border-radius: 5px 5px 0px 0px;
     padding-bottom: 0px;
     padding-top: 5px;
@@ -6431,9 +6431,9 @@ input[type="checkbox"],
 
 .dropdown-menu {
   margin-top: 0;
-  border-right: 1px solid #ecec77;
-  border-left: 1px solid #ecec77;
-  border-bottom: 1px solid #ecec77;
+  border-right: 1px solid #cece29;
+  border-left: 1px solid #cece29;
+  border-bottom: 1px solid #cece29;
   border-top: transparent; }
 
 .alert {
