@@ -51,9 +51,6 @@ options(knitr.kable.NA = '')
 require(pacman)
 pacman::p_load(kableExtra, ggplot2, glmnet, data.table, fixest)
 
-# Source F-test fix function
-source("/fixFtest.R")
-
 # Set data directory
 datadir = "./DataPath"
 
@@ -79,15 +76,6 @@ for(mp in missperc) {
     load(paste0(fp, "L2LMER_LONG_Summaries.rda"))
     load(paste0(fp, "PMM_Summaries.rda"))
     load(paste0(fp, "RQ_Summaries.rda"))
-    
-    # Apply F test fix
-    for(f in as.list("L2PAN_Summaries.rda", "L2PAN_LONG_Summaries.rda",
-                     "L2LMER_Summaries.rda", "L2LMER_LONG_Summaries.rda",
-                     "PMM_Summaries.rda", "RQ_Summaries.rda")) {
-
-      assign(gsub(".rda", "", f), fixFtest(get(gsub(".rda", "", f))))
-
-    }
     
     # Create "observed" cases
     Observed.GC = copy(PMM_Summaries[["SCHOOL"]][["GRADE_CONTENT"]][["Evaluation"]])[, IMP_METHOD := "Observed"]

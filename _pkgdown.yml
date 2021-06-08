@@ -25,14 +25,18 @@ navbar:
     left:
     - text: Vignettes
       menu:
-      - text: "Multiple Imputation"
+      - text: "Multiple Imputation Summary"
         href: articles/MI_Comparison_Summary.html
-      - text: "Practice Vignette"
-        href: articles/practice_vignette.html
+      - text: "Multiple Imputation Regression Models"
+        href: articles/MI_Comparison_Regression.html
+      - text: "Propensity Score Weighting"
+        href: articles/PSW_Example.html
     - text: Source Code
       menu:
       - text: "Multiple Imputation Comparisons"
         href: articles/MI_Source_Code_Landing_Page.html
+      - text: "Propensity Score Weighting"
+        href: articles/PSW_Source_Code_Landing_Page.html
     - text: Presentations
       menu:
       - text: "Internship Presentations"
