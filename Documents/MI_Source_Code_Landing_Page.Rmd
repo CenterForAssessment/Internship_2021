@@ -1,6 +1,6 @@
 ---
 title: "Source Code for Multiple Imputation Comparison Analyses"
-date: "Last Updated: June 8, 2021"
+date: "Last Updated: June 16, 2021"
 output: html_document
 ---
 
@@ -17,7 +17,7 @@ The following .Rmd files can be rendered together to create an HTML report for a
 * [Child .Rmd File: Student Growth Percentiles](https://centerforassessment.github.io/Internship_2021/articles/MI_Individual_Reports_Child_SGP.html)
 * [Child .Rmd File: Baseline Student Growth Percentiles](https://centerforassessment.github.io/Internship_2021/articles/MI_Individual_Reports_Child_SGPB.html)
 
-# Comparison Summary
+# Comparison Summaries
 
 * [MI Summary Source Code](https://centerforassessment.github.io/Internship_2021/articles/MI_Summary_Source_Code.html)
 

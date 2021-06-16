@@ -1,0 +1,19 @@
+---
+title: "Multiple Imputation Comparison Analyses"
+date: "Last Updated: June 16, 2021"
+output: html_document
+---
+
+# Analysis Summary
+
+Due to a variety of factors, we may encounter large amounts of missingness in educational assessment data. Multiple imputation (MI) is one potential method for creating "adjusted" scale scores and student growth percentiles (SGPs) in the presence of missing data. The vignettes below summarize simulations evaluating the efficacy of various MI methods for this context. The simulations either did or did not introduce a COVID-19 impact into the data. 
+
+# Simulation Summaries
+
+* [No COVID-19 Impact](https://centerforassessment.github.io/Internship_2021/articles/MI_Comparison_Summary.html)
+* [COVID-19 Impact](https://centerforassessment.github.io/Internship_2021/articles/MI_Comparison_Impact_Summary.html)
+
+# Regression Models
+
+* No COVID-19 Impact
+* COVID-19 Impact

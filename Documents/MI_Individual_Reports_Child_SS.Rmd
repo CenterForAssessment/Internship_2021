@@ -1,7 +1,7 @@
 ---
 title: "Source Code for Multiple Imputation Comparisons: Individual Reports, Scale Score Summaries"
 author: "Allie Cooperman, Adam Van Iwaarden, and Damian Betebenner"
-date: "`r format(Sys.time(), '%B %d, %Y')`"
+date: "June 16, 2021"
 output: html_document
 params: 
     printcode: TRUE
