@@ -6,8 +6,8 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <link rel="icon" type="image/png" href="https://centerforassessment.github.io/assets/favicon.png" sizes="16x16">
-<meta property="og:title" content="Internship 2021 • Source Code for Multiple Imputation Comparison Analyses">
-<meta property="og:description" content="Internship 2021 • Source Code for Multiple Imputation Comparison Analyses">
+<meta property="og:title" content="Internship 2021 • Propensity Score Weighting Analyses">
+<meta property="og:description" content="Internship 2021 • Propensity Score Weighting Analyses">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://centerforassessment.github.io/Internship 2021">
 <meta property="og:image" content="https://centerforassessment.github.io/assets/favicon.png">
@@ -15,9 +15,9 @@
 <meta name="twitter:site" content="@NCIEA1">
 <meta name="twitter:creator" content="@dbetebenner">
 <meta name="twitter:image" content="https://centerforassessment.github.io/assets/favicon.png">
-<meta name="twitter:title" content="Internship 2021 • Source Code for Multiple Imputation Comparison Analyses">
-<meta name="twitter:description" content="Internship 2021 • Source Code for Multiple Imputation Comparison Analyses">
-<title>Internship 2021 • Source Code for Multiple Imputation Comparison Analyses</title>
+<meta name="twitter:title" content="Internship 2021 • Propensity Score Weighting Analyses">
+<meta name="twitter:description" content="Internship 2021 • Propensity Score Weighting Analyses">
+<title>Internship 2021 • Propensity Score Weighting Analyses</title>
 <!-- jquery --><script src="https://code.jquery.com/jquery-3.1.0.min.js" integrity="sha384-nrOSfDHtoPMzJHjVTdCopGqIqeYETSXhZDFyniQ8ZHcVy08QesyHcnOUpMpqnmWq" crossorigin="anonymous"></script><!-- Bootstrap --><script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script><!-- Font Awesome icons --><link href="https://use.fontawesome.com/releases/v5.0.8/css/all.css" rel="stylesheet">
 <!-- clipboard.js --><script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.4/clipboard.min.js" integrity="sha256-FiZwavyI2V6+EXO1U+xzLG3IKldpiTFf3153ea9zikQ=" crossorigin="anonymous"></script><!-- sticky kit --><script src="https://cdnjs.cloudflare.com/ajax/libs/sticky-kit/1.1.3/sticky-kit.min.js" integrity="sha256-c4Rlo1ZozqTPE2RLuvbusY3+SU1pQaJC0TjuhygMipw=" crossorigin="anonymous"></script><!-- Fonts --><link href="https://fonts.googleapis.com/css?family=Josefin+Sans:400,600" rel="stylesheet" type="text/css">
 <!-- mathjax --><script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script><!-- gist-embed --><script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/gist-embed/2.4/gist-embed.min.js"></script><!-- packagePages --><link href="../packagePages.css" rel="stylesheet">
@@ -116,12 +116,12 @@
 <!--/.navbar -->
 
       
-      </header><script src="MI_Source_Code_Landing_Page_files/header-attrs-2.8/header-attrs.js"></script><div class="row">
+      </header><script src="PSW_Vignette_Landing_Page_files/header-attrs-2.8/header-attrs.js"></script><div class="row">
   <div class="col-md-9">
     <div class="page-header toc-ignore">
-      <h1>Source Code for Multiple Imputation Comparison Analyses</h1>
+      <h1>Propensity Score Weighting Analyses</h1>
             
-            <h4 class="date">Last Updated: June 8, 2021</h4>
+            <h4 class="date">Last Updated: June 16, 2021</h4>
           </div>
 
     
@@ -130,42 +130,20 @@
 <div id="analysis-summary" class="section level1">
 <h1 class="hasAnchor">
 <a href="#analysis-summary" class="anchor" aria-hidden="true"></a>Analysis Summary</h1>
-<p>The following files present source code for comparing multiple imputation (MI) methods when calculating aggregated scale scores and student growth percentiles. When data are missing, is MI an appropriate method for creating “adjusted” summary statistics? If so, which MI method is most effective and in what data contexts?</p>
+<p>Enrollment changes and other factors may lead to samples with substantially different compositions. Propensity score weighting is a potential mechanism for making samples more comparable on selected covariates. The vignettes below provide high-level overviews of propensity score weighting for cross-sectional studies, including example code for applying propensity score weighting to educational assessment data for simple mean difference analyses.</p>
 </div>
-<div id="individual-reports" class="section level1">
+<div id="introductory-vignette" class="section level1">
 <h1 class="hasAnchor">
-<a href="#individual-reports" class="anchor" aria-hidden="true"></a>Individual Reports</h1>
-<p>The following .Rmd files can be rendered together to create an HTML report for a given type and percentage of missingness. Certain parameter values (e.g., missingness type, data directory, author name, etc.) are set in the list of <code>params</code> in the YAML header.</p>
+<a href="#introductory-vignette" class="anchor" aria-hidden="true"></a>Introductory Vignette</h1>
 <ul>
-<li><a href="https://centerforassessment.github.io/Internship_2021/articles/MI_Individual_Reports_Main.html">Parent .Rmd File</a></li>
-<li><a href="https://centerforassessment.github.io/Internship_2021/articles/MI_Individual_Reports_Child_SS.html">Child .Rmd File: Scale Scores</a></li>
-<li><a href="https://centerforassessment.github.io/Internship_2021/articles/MI_Individual_Reports_Child_SGP.html">Child .Rmd File: Student Growth Percentiles</a></li>
-<li><a href="https://centerforassessment.github.io/Internship_2021/articles/MI_Individual_Reports_Child_SGPB.html">Child .Rmd File: Baseline Student Growth Percentiles</a></li>
+<li><a href="https://centerforassessment.github.io/Internship_2021/articles/PSW_Example.html">Propensity Score Weighting for Cross-Sectional Analyses</a></li>
 </ul>
 </div>
-<div id="comparison-summary" class="section level1">
+<div id="application-to-multilevel-data" class="section level1">
 <h1 class="hasAnchor">
-<a href="#comparison-summary" class="anchor" aria-hidden="true"></a>Comparison Summary</h1>
+<a href="#application-to-multilevel-data" class="anchor" aria-hidden="true"></a>Application to Multilevel Data</h1>
 <ul>
-<li><a href="https://centerforassessment.github.io/Internship_2021/articles/MI_Summary_Source_Code.html">MI Summary Source Code</a></li>
-</ul>
-</div>
-<div id="regression-models" class="section level1">
-<h1 class="hasAnchor">
-<a href="#regression-models" class="anchor" aria-hidden="true"></a>Regression Models</h1>
-<ul>
-<li><a href="https://centerforassessment.github.io/Internship_2021/articles/MI_Regression_Source_Code.html">MI Regression Model Source Code</a></li>
-</ul>
-</div>
-<div id="markdown-and-r-resources" class="section level1">
-<h1 class="hasAnchor">
-<a href="#markdown-and-r-resources" class="anchor" aria-hidden="true"></a>Markdown and R Resources</h1>
-<ul>
-<li><a href="https://bookdown.org/yihui/rmarkdown-cookbook/">R Markdown Cookbook</a></li>
-<li><a href="https://cran.r-project.org/web/packages/data.table/vignettes/datatable-intro.html">data.table vignette</a></li>
-<li><a href="https://ggplot2.tidyverse.org/">ggplot2 website</a></li>
-<li><a href="https://cran.r-project.org/web/packages/fixest/vignettes/fixest_walkthrough.html">fixest vignette</a></li>
-<li><a href="https://cran.r-project.org/web/packages/kableExtra/vignettes/awesome_table_in_html.html">kableExtra HTML table vignette</a></li>
+<li><a href="https://centerforassessment.github.io/Internship_2021/articles/PSW_Multilevel_Example.html">Propensity Score Weighting with Multilevel Data</a></li>
 </ul>
 </div>
 </div>
@@ -177,10 +155,8 @@
       <h2>Contents</h2>
       <ul class="nav nav-pills nav-stacked">
 <li><a href="#analysis-summary">Analysis Summary</a></li>
-      <li><a href="#individual-reports">Individual Reports</a></li>
-      <li><a href="#comparison-summary">Comparison Summary</a></li>
-      <li><a href="#regression-models">Regression Models</a></li>
-      <li><a href="#markdown-and-r-resources">Markdown and R Resources</a></li>
+      <li><a href="#introductory-vignette">Introductory Vignette</a></li>
+      <li><a href="#application-to-multilevel-data">Application to Multilevel Data</a></li>
       </ul>
 </div>
       </div>
