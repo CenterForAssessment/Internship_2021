@@ -25,8 +25,8 @@ navbar:
     left:
     - text: Vignettes
       menu:
-      - text: "Multiple Imputation Summary"
-        href: articles/MI_Comparison_Summary.html
+      - text: "Multiple Imputation Comparisons"
+        href: articles/MI_Vignette_Landing_Page.html
       - text: "Propensity Score Weighting"
         href: articles/PSW_Vignette_Landing_Page.html
     - text: Source Code
