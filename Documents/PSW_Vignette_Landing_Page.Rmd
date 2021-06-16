@@ -1,0 +1,17 @@
+---
+title: "Propensity Score Weighting Analyses"
+date: "Last Updated: June 16, 2021"
+output: html_document
+---
+
+# Analysis Summary
+
+Enrollment changes and other factors may lead to samples with substantially different compositions. Propensity score weighting is a potential mechanism for making samples more comparable on selected covariates. The vignettes below provide high-level overviews of propensity score weighting for cross-sectional studies, including example code for applying propensity score weighting to educational assessment data for simple mean difference analyses. 
+
+# Introductory Vignette
+
+* [Propensity Score Weighting for Cross-Sectional Analyses](https://centerforassessment.github.io/Internship_2021/articles/PSW_Example.html)
+
+# Application to Multilevel Data
+
+* [Propensity Score Weighting with Multilevel Data](https://centerforassessment.github.io/Internship_2021/articles/PSW_Multilevel_Example.html)

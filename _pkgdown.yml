@@ -27,10 +27,8 @@ navbar:
       menu:
       - text: "Multiple Imputation Summary"
         href: articles/MI_Comparison_Summary.html
-      - text: "Multiple Imputation Regression Models"
-        href: articles/MI_Comparison_Regression.html
       - text: "Propensity Score Weighting"
-        href: articles/PSW_Example.html
+        href: articles/PSW_Vignette_Landing_Page.html
     - text: Source Code
       menu:
       - text: "Multiple Imputation Comparisons"
