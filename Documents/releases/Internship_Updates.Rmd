@@ -26,9 +26,9 @@ Three weeks into the summer internship and there is already plenty to report!
 
 There have been numerous exciting developments over the past couple weeks!
 
-* Continuing with the multiple imputation analyses, ran a series of generalized linear models to better understand the factors associated with imputation's efficacy.
+* Continuing with the multiple imputation analyses, summarized results from updated simulations and fit a series of generalized linear models.
 * Delved into the world of propensity score weighting to evaluate its applicability for analyzing educational assessment data.
 * Began setting up a [personal GitHub-hosted website](https://alliecooperman.github.io/). 
-* Presentation slides for the second internship update coming soon!
+* Presentation slides for the second internship update can be found [here](https://centerforassessment.github.io/Internship_2021/articles/Internship_Presentation_Landing_Page.html).
 
 # July 7th Internship Update
