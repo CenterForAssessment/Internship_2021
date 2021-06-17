@@ -1,0 +1,457 @@
+---
+title: "Source Code for Multiple Imputation Comparisons: Regression Model Vignette"
+author: "Allie Cooperman, Adam Van Iwaarden, and Damian Betebenner"
+date: "June 16, 2021"
+output: html_document
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(cache   = FALSE, 
+                      eval    = FALSE,
+                      echo    = TRUE, 
+                      message = FALSE, 
+                      warning = FALSE,
+                      fig.align = "center") 
+```
+
+The code below can be used to recreate the tables and figures in the multiple imputation (MI) regression vignettes. For more information on fitting fixed-effects models with the `fixest` package, see the [`fixest` vignette](https://cran.r-project.org/web/packages/fixest/vignettes/fixest_walkthrough.html).
+
+Note that many of the models are time- and memory-intensive. One may consider setting `cache = TRUE`. Please see Yihui Xie's `knitr` [documentation on caching](https://yihui.org/knitr/options/#cache) for more details. Additionally, it is recommended to routinely remove objects from the R environment (using the `rm()` function) to prevent running out of memory.
+
+The vignettes include a series of regression models that differ by the dependent variable used, unit of analysis (grade/content area or school level), and so forth. For simplicity, we present select example code for a handful of models. This code can be easily modified for additional analyses (e.g., using SGP raw bias rather than scale score raw bias). 
+
+## Set-Up
+
+The code below generates the vignette for the simulated data without a COVID-19 impact. Given that the MI methods differed between the "impact" and "no impact" simulations, make sure to change the data names and imputation method labels accordingly. Additionally, data tables are created across all amputations (`Amp_Level`) and when aggregating across amputed data sets (`Evaluation`). The latter tables, noted by `.Eval`, are used for the mixed-effects models.
+
+````md
+```{r setup}`r ''`
+# knitr options
+knitr::opts_chunk$set(cache   = FALSE, 
+                      echo    = FALSE, 
+                      fig.align = "center",
+                      fig.width = 9,
+                      fig.topcaption = TRUE)
+
+# kable options
+options(knitr.kable.NA = '')
+
+# Set working directory
+setwd("./FilePath")
+
+# Load R libraries
+require(pacman)
+pacman::p_load(kableExtra, ggplot2, data.table, fixest, lme4)
+
+# Missingness percentages
+missperc = c(30, 50, 70)
+
+# Missingness types
+misstype = c("MCAR", "STATUS_w_DEMOG", "STATUS_w_GROWTH")
+
+# For-loop to create full data tables
+MIsummary.GC = MIsummary.School =  NULL
+MIsummary.GC.Eval = MIsummary.School.Eval =  NULL
+for(mp in missperc) {
+  
+  for(mt in misstype) {
+    
+    # Create file path
+    fp = paste0(datadir, "/", mp, " Percent Missing/", mt, "/")
+    
+    # Load summary data
+    load(paste0(fp, "L2PAN_Summaries.rda"))
+    load(paste0(fp, "L2PAN_LONG_Summaries.rda"))
+    load(paste0(fp, "L2LMER_Summaries.rda"))
+    load(paste0(fp, "L2LMER_LONG_Summaries.rda"))
+    load(paste0(fp, "PMM_Summaries.rda"))
+    load(paste0(fp, "RQ_Summaries.rda"))
+    
+    # Create "observed" cases
+    Observed.GC = copy(PMM_Summaries[["SCHOOL"]][["GRADE_CONTENT"]][["Amp_Level"]])[,IMP_METHOD:="Observed"]
+    Observed.GC[, SS_Raw_Bias := SS_Obs_Raw_Bias]
+    Observed.GC[, SGP_Raw_Bias := SGP_Obs_Raw_Bias]
+    Observed.GC[, SGPB_Raw_Bias := SGPB_Obs_Raw_Bias]
+    
+    Observed.GC.Eval = copy(PMM_Summaries[["SCHOOL"]][["GRADE_CONTENT"]][["Evaluation"]])[,IMP_METHOD:="Observed"]
+    Observed.GC.Eval[, SS_Raw_Bias := SS_Obs_Raw_Bias]
+    Observed.GC.Eval[, SGP_Raw_Bias := SGP_Obs_Raw_Bias]
+    Observed.GC.Eval[, SGPB_Raw_Bias := SGPB_Obs_Raw_Bias]
+    
+    Observed.School = copy(PMM_Summaries[["SCHOOL"]][["GLOBAL"]][["Amp_Level"]])[,IMP_METHOD:="Observed"]
+    Observed.School[, SS_Raw_Bias := SS_Obs_Raw_Bias]
+    Observed.School[, SGP_Raw_Bias := SGP_Obs_Raw_Bias]
+    Observed.School[, SGPB_Raw_Bias := SGPB_Obs_Raw_Bias]
+    
+    Observed.School.Eval = copy(PMM_Summaries[["SCHOOL"]][["GLOBAL"]][["Evaluation"]])[,IMP_METHOD:="Observed"]
+    Observed.School.Eval[, SS_Raw_Bias := SS_Obs_Raw_Bias]
+    Observed.School.Eval[, SGP_Raw_Bias := SGP_Obs_Raw_Bias]
+    Observed.School.Eval[, SGPB_Raw_Bias := SGPB_Obs_Raw_Bias]
+    
+    # Create long data.table combining imputation methods 
+    # By grade/content area
+    data.temp.gc = rbindlist(list(
+      
+      # L2PAN
+      data.table(L2PAN_Summaries$SCHOOL$GRADE_CONTENT$Amp_Level, "IMP_METHOD" = "L2PAN"),
+      
+      # L2PAN LONG
+      data.table(L2PAN_LONG_Summaries$SCHOOL$GRADE_CONTENT$Amp_Level, "IMP_METHOD" = "L2PAN_LONG"),
+      
+       # L2LMER
+      data.table(L2LMER_Summaries$SCHOOL$GRADE_CONTENT$Amp_Level, "IMP_METHOD" = "L2LMER"),
+      
+      # L2LMER LONG
+      data.table(L2LMER_LONG_Summaries$SCHOOL$GRADE_CONTENT$Amp_Level, "IMP_METHOD" = "L2LMER_LONG"),
+      
+      # PMM
+      data.table(PMM_Summaries$SCHOOL$GRADE_CONTENT$Amp_Level, "IMP_METHOD" = "PMM"),
+      
+      # RQ
+      data.table(RQ_Summaries$SCHOOL$GRADE_CONTENT$Amp_Level, "IMP_METHOD" = "RQ"),
+      
+      # Observed
+      data.table(Observed.GC))
+  
+      )
+    data.temp.gc.eval = rbindlist(list(
+      
+      # L2PAN
+      data.table(L2PAN_Summaries$SCHOOL$GRADE_CONTENT$Evaluation, "IMP_METHOD" = "L2PAN"),
+      
+      # L2PAN LONG
+      data.table(L2PAN_LONG_Summaries$SCHOOL$GRADE_CONTENT$Evaluation, "IMP_METHOD" = "L2PAN_LONG"),
+      
+       # L2LMER
+      data.table(L2LMER_Summaries$SCHOOL$GRADE_CONTENT$Evaluation, "IMP_METHOD" = "L2LMER"),
+      
+      # L2LMER LONG
+      data.table(L2LMER_LONG_Summaries$SCHOOL$GRADE_CONTENT$Evaluation, "IMP_METHOD" = "L2LMER_LONG"),
+      
+      # PMM
+      data.table(PMM_Summaries$SCHOOL$GRADE_CONTENT$Evaluation, "IMP_METHOD" = "PMM"),
+      
+      # RQ
+      data.table(RQ_Summaries$SCHOOL$GRADE_CONTENT$Evaluation, "IMP_METHOD" = "RQ"),
+      
+      # Observed
+      data.table(Observed.GC.Eval))
+  
+      )
+    
+    # Convert imputation method, grade, and content area variables to class "factor"
+    data.temp.gc[, IMP_METHOD := factor(IMP_METHOD, 
+                   levels = rev(c("Observed", "PMM", "RQ", "L2PAN", 
+                                  "L2LMER", "L2PAN_LONG", "L2LMER_LONG")))]
+    data.temp.gc[, GRADE := as.factor(GRADE)]
+    data.temp.gc[, CONTENT_AREA := as.factor(CONTENT_AREA)]
+    data.temp.gc.eval[, IMP_METHOD := factor(IMP_METHOD, 
+                        levels = rev(c("Observed", "PMM", "RQ", "L2PAN", 
+                                       "L2LMER", "L2PAN_LONG", "L2LMER_LONG")))]
+    data.temp.gc.eval[, GRADE := as.factor(GRADE)]
+    data.temp.gc.eval[, CONTENT_AREA := as.factor(CONTENT_AREA)]
+    
+    # Create missingness type and percentage variables
+    data.temp.gc[, MISS_TYPE := mt]
+    data.temp.gc[, MISS_PERC := mp]
+    data.temp.gc.eval[, MISS_TYPE := mt]
+    data.temp.gc.eval[, MISS_PERC := mp]
+    
+    # Combine with previous data
+    MIsummary.GC = rbind(MIsummary.GC, data.temp.gc)
+    MIsummary.GC.Eval = rbind(MIsummary.GC.Eval, data.temp.gc.eval)
+    
+    # Create long data.table combining imputation methods 
+    # By school
+    data.temp.sc = rbindlist(list(
+      
+      # L2PAN
+      data.table(L2PAN_Summaries$SCHOOL$GLOBAL$Amp_Level, "IMP_METHOD" = "L2PAN"),
+      
+      # L2PAN LONG
+      data.table(L2PAN_LONG_Summaries$SCHOOL$GLOBAL$Amp_Level, "IMP_METHOD" = "L2PAN_LONG"),
+      
+       # L2LMER
+      data.table(L2LMER_Summaries$SCHOOL$GLOBAL$Amp_Level, "IMP_METHOD" = "L2LMER"),
+      
+      # L2LMER LONG
+      data.table(L2LMER_LONG_Summaries$SCHOOL$GLOBAL$Amp_Level, "IMP_METHOD" = "L2LMER_LONG"),
+      
+      # PMM
+      data.table(PMM_Summaries$SCHOOL$GLOBAL$Amp_Level, "IMP_METHOD" = "PMM"),
+      
+      # RQ
+      data.table(RQ_Summaries$SCHOOL$GLOBAL$Amp_Level, "IMP_METHOD" = "RQ"),
+      
+      # Observed
+      data.table(Observed.School))
+  
+      )
+    data.temp.sc.eval = rbindlist(list(
+      
+      # L2PAN
+      data.table(L2PAN_Summaries$SCHOOL$GLOBAL$Evaluation, "IMP_METHOD" = "L2PAN"),
+      
+      # L2PAN LONG
+      data.table(L2PAN_LONG_Summaries$SCHOOL$GLOBAL$Evaluation, "IMP_METHOD" = "L2PAN_LONG"),
+      
+       # L2LMER
+      data.table(L2LMER_Summaries$SCHOOL$GLOBAL$Evaluation, "IMP_METHOD" = "L2LMER"),
+      
+      # L2LMER LONG
+      data.table(L2LMER_LONG_Summaries$SCHOOL$GLOBAL$Evaluation, "IMP_METHOD" = "L2LMER_LONG"),
+      
+      # PMM
+      data.table(PMM_Summaries$SCHOOL$GLOBAL$Evaluation, "IMP_METHOD" = "PMM"),
+      
+      # RQ
+      data.table(RQ_Summaries$SCHOOL$GLOBAL$Evaluation, "IMP_METHOD" = "RQ"),
+      
+      # Observed
+      data.table(Observed.School.Eval))
+  
+      )
+    
+    # Convert imputation method, grade, and content area variables to class "factor"
+    data.temp.sc[, IMP_METHOD := factor(IMP_METHOD, 
+                   levels = rev(c("Observed", "PMM", "RQ", "L2PAN", 
+                                  "L2LMER", "L2PAN_LONG", "L2LMER_LONG")))]
+    data.temp.sc.eval[, IMP_METHOD := factor(IMP_METHOD, 
+                        levels = rev(c("Observed", "PMM", "RQ", "L2PAN", 
+                                        "L2LMER", "L2PAN_LONG", "L2LMER_LONG")))]
+    
+    # Create missingness type and percentage variables
+    data.temp.sc[, MISS_TYPE := mt]
+    data.temp.sc[, MISS_PERC := mp]
+    data.temp.sc.eval[, MISS_TYPE := mt]
+    data.temp.sc.eval[, MISS_PERC := mp]
+    
+    # Combine with previous data
+    MIsummary.School = rbind(MIsummary.School, data.temp.sc)
+    MIsummary.School.Eval = rbind(MIsummary.School.Eval, data.temp.sc.eval)
+        
+  } # end for mt in misstype
+  
+} # end for mp in missperc
+
+# Convert missing type and percentage to factor variables
+MIsummary.GC[, MISS_TYPE := as.factor(MISS_TYPE)]
+MIsummary.GC[, MISS_PERC := as.factor(MISS_PERC)]
+MIsummary.GC[, SCHOOL_NUMBER := as.factor(SCHOOL_NUMBER)]
+MIsummary.School[, MISS_TYPE := as.factor(MISS_TYPE)]
+MIsummary.School[, MISS_PERC := as.factor(MISS_PERC)]
+MIsummary.School[, SCHOOL_NUMBER := as.factor(SCHOOL_NUMBER)]
+MIsummary.GC.Eval[, MISS_TYPE := as.factor(MISS_TYPE)]
+MIsummary.GC.Eval[, MISS_PERC := as.factor(MISS_PERC)]
+MIsummary.GC.Eval[, SCHOOL_NUMBER := as.factor(SCHOOL_NUMBER)]
+MIsummary.School.Eval[, MISS_TYPE := as.factor(MISS_TYPE)]
+MIsummary.School.Eval[, MISS_PERC := as.factor(MISS_PERC)]
+MIsummary.School.Eval[, SCHOOL_NUMBER := as.factor(SCHOOL_NUMBER)]
+
+# Create releveled imputation method factor variable
+# Setting "Observed" as the reference level for modeling
+MIsummary.GC[, IMP_METHOD_REF := relevel(IMP_METHOD, ref = "Observed")]
+MIsummary.School[, IMP_METHOD_REF := relevel(IMP_METHOD, ref = "Observed")]
+MIsummary.GC.Eval[, IMP_METHOD_REF := relevel(IMP_METHOD, ref = "Observed")]
+MIsummary.School.Eval[, IMP_METHOD_REF := relevel(IMP_METHOD, ref = "Observed")]
+
+# Remove observations with N < 10
+MIsummary.GC = MIsummary.GC[N >= 10]
+MIsummary.School = MIsummary.School[N >= 10]
+MIsummary.GC.Eval = MIsummary.GC.Eval[N >= 10]
+MIsummary.School.Eval = MIsummary.School.Eval[N >= 10]
+setkey(MIsummary.GC, IMP_METHOD); setkey(MIsummary.School, IMP_METHOD)
+setkey(MIsummary.GC.Eval, IMP_METHOD); setkey(MIsummary.School.Eval, IMP_METHOD)
+
+# Scale N and percent missing
+MIsummary.GC[, Pct_Miss_Raw := Percent_Missing]
+MIsummary.GC[, Percent_Missing := scale(Percent_Missing), keyby = c("CONTENT_AREA","GRADE")]
+MIsummary.GC[, N_Raw := N]
+MIsummary.GC[, N := scale(N), keyby = c("CONTENT_AREA","GRADE")]
+MIsummary.GC.Eval[, Pct_Miss_Raw := Percent_Missing]
+MIsummary.GC.Eval[, Percent_Missing := scale(Percent_Missing), keyby = c("CONTENT_AREA","GRADE")]
+MIsummary.GC.Eval[, N_Raw := N]
+MIsummary.GC.Eval[, N := scale(N), keyby = c("CONTENT_AREA","GRADE")]
+
+MIsummary.School[, Pct_Miss_Raw := Percent_Missing]
+MIsummary.School[, Percent_Missing := scale(Percent_Missing)]
+MIsummary.School[, N_Raw := N]
+MIsummary.School[, N := scale(N)]
+MIsummary.School.Eval[, Pct_Miss_Raw := Percent_Missing]
+MIsummary.School.Eval[, Percent_Missing := scale(Percent_Missing)]
+MIsummary.School.Eval[, N_Raw := N]
+MIsummary.School.Eval[, N := scale(N)]
+
+# Create percent bias variables
+MIsummary.GC[, SS_Pct_Bias := 100*(abs(SS_Raw_Bias/Mean_SS_Complete))]
+MIsummary.GC[, SGP_Pct_Bias := 100*(abs(SGP_Raw_Bias/Mean_SGP_Complete))]
+MIsummary.GC[, SGPB_Pct_Bias := 100*(abs(SGPB_Raw_Bias/Mean_SGPB_Complete))]
+MIsummary.School[, SS_Pct_Bias := 100*(abs(SS_Raw_Bias/Mean_SS_Complete))]
+MIsummary.School[, SGP_Pct_Bias := 100*(abs(SGP_Raw_Bias/Mean_SGP_Complete))]
+MIsummary.School[, SGPB_Pct_Bias := 100*(abs(SGPB_Raw_Bias/Mean_SGPB_Complete))]
+MIsummary.GC.Eval[, SS_Pct_Bias := 100*(abs(SS_Raw_Bias/Mean_SS_Complete))]
+MIsummary.GC.Eval[, SGP_Pct_Bias := 100*(abs(SGP_Raw_Bias/Mean_SGP_Complete))]
+MIsummary.GC.Eval[, SGPB_Pct_Bias := 100*(abs(SGPB_Raw_Bias/Mean_SGPB_Complete))]
+MIsummary.School.Eval[, SS_Pct_Bias := 100*(abs(SS_Raw_Bias/Mean_SS_Complete))]
+MIsummary.School.Eval[, SGP_Pct_Bias := 100*(abs(SGP_Raw_Bias/Mean_SGP_Complete))]
+MIsummary.School.Eval[, SGPB_Pct_Bias := 100*(abs(SGPB_Raw_Bias/Mean_SGPB_Complete))]
+
+# Set color-blind friendly color palette
+# https://stackoverflow.com/questions/65013406/how-to-generate-30-distinct-colors-that-are-color-blind-friendly
+colorpal = c("#000000", "#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
+```
+````
+
+## Fixed-Effects Models
+
+Below is the code for fitting fixed-effect regression models for scale score raw bias, either at the grade/content area or school level.
+
+````md
+```{r}`r ''`
+# Fit additive model, grade/content area level
+rawbias.ss.allgrades = feols(
+  
+  # Model formula
+  SS_Raw_Bias ~ i(IMP_METHOD_REF) + N + Percent_Missing + MISS_TYPE |
+  
+  # Fixed effects
+  CONTENT_AREA^GRADE + AMP_N,
+  
+  # Data
+  MIsummary.GC,
+  
+  # Don't combine fixed effects
+  combine.quick = FALSE
+  
+)
+
+# Fit two-way interaction model, grade/content area level
+rawbias.ss.interaction.allgrades = feols(
+  
+  # Model formula
+  SS_Raw_Bias ~ i(IMP_METHOD_REF) + (N + Percent_Missing + MISS_TYPE)^2 |
+  
+  # Fixed effects
+  CONTENT_AREA^GRADE + AMP_N,
+  
+  # Data
+  MIsummary.GC,
+  
+  # Don't combine fixed effects
+  combine.quick = FALSE
+  
+)
+```
+
+```{r echo = FALSE}`r ''`
+# Print table of models
+etable(rawbias.ss.allgrades, rawbias.ss.interaction.allgrades,
+       fitstat = c("r2", "war2", "aic", "bic"), subtitles = c("Additive", "Interaction"))[-c(1:2),] %>%
+kable(format = "html", booktabs = T, row.names = T,
+      col.names = c("Additive Model", "Interaction Model"),
+      caption = "Fixed-effect regression models for scale score raw bias at the grade/content area level, all grade levels") %>%
+  kable_classic_2("hover", full_width = F) %>%
+  scroll_box(height = "500px")
+```
+
+```{r echo = FALSE, fig.cap = "Coefficient plot, additive models for scale score raw bias at the grade/content area level"}`r ''`
+# Coefficient plots
+coefplot(rawbias.ss.allgrades, main = " ", 
+         xlab = "Predictor", ylab = "Coefficient Estimate and 95% CI",
+         col = colorpal, cex.lab = 0.5)
+abline(h = -mean(MIsummary.GC[IMP_METHOD == "Observed", SS_Raw_Bias], na.rm=T), 
+       col = "red", lty = "dashed")
+```
+
+```{r echo = FALSE, ffig.cap = "Fixed effects estimates, additive model"}`r ''`
+# Plot of fixed effects
+plot(fixef(rawbias.ss.allgrades))
+```
+
+```{r echo = FALSE, fig.cap = "Fixed effects estimates, interaction model"}`r ''`
+# Plot of fixed effects
+plot(fixef(rawbias.ss.interaction.allgrades))
+```
+
+```{r}`r ''`
+# Fit additive model, school level
+rawbias.ss.school = feols(
+  
+  # Model formula
+  SS_Raw_Bias ~ i(IMP_METHOD_REF) + N + Percent_Missing + MISS_TYPE |
+  
+  # Fixed effects
+  AMP_N,
+  
+  # Data
+  MIsummary.School,
+  
+  # Don't combine fixed effects
+  combine.quick = FALSE
+  
+)
+
+# Fit two-way interaction model, school level
+rawbias.ss.interaction.school = feols(
+  
+  # Model formula
+  SS_Raw_Bias ~ i(IMP_METHOD_REF) + (N + Percent_Missing + MISS_TYPE)^2 |
+  
+  # Fixed effects
+  AMP_N,
+  
+  # Data
+  MIsummary.School,
+  
+  # Don't combine fixed effects
+  combine.quick = FALSE
+  
+)
+```
+
+```{r echo = FALSE}`r ''`
+# Print table of models
+etable(rawbias.ss.school, rawbias.ss.interaction.school,
+       fitstat = c("r2", "war2", "aic", "bic"), subtitles = c("Additive", "Interaction"))[-c(1:2),] %>%
+kable(format = "html", booktabs = T, row.names = T,
+      col.names = c("Additive Model", "Interaction Model"),
+      caption = "Fixed-effect regression models for scale score raw bias at the school level") %>%
+  kable_classic_2("hover", full_width = F) %>%
+  scroll_box(height = "500px")
+```
+
+```{r echo = FALSE, fig.cap = "Coefficient plot, additive models for scale score raw bias at the school level"}`r ''`
+# Coefficient plots
+coefplot(rawbias.ss.school, main = " ", 
+         xlab = "Predictor", ylab = "Coefficient Estimate and 95% CI",
+         col = colorpal, cex.lab = 0.5)
+abline(h = -mean(MIsummary.School[IMP_METHOD == "Observed", SS_Raw_Bias], na.rm=T), 
+       col = "red", lty = "dashed")
+```
+
+```{r echo = FALSE, fig.cap = "Fixed effects estimates, additive model"}`r ''`
+# Plot of fixed effects
+plot(fixef(rawbias.ss.school))
+```
+
+```{r echo = FALSE, fig.cap = "Fixed effects estimates, interaction model"}`r ''`
+# Plot of fixed effects
+plot(fixef(rawbias.ss.interaction.school))
+```
+````
+
+## Mixed-Effects models
+
+The code below fits an additive mixed-effects model with a random intercept for school. Again, the dependent variable is scale score raw bias, modeling at the grade/content area level.
+
+````md
+```{r}`r ''`
+# Fit random intercept model
+rawbias.ss.lmer = lmer(SS_Raw_Bias ~ IMP_METHOD_REF + N + Percent_Missing + MISS_TYPE + 
+                                     GRADE + CONTENT_AREA + (1 | SCHOOL_NUMBER),
+                       data = MIsummary.GC.Eval, REML = TRUE)
+
+# Model summary
+summary(rawbias.ss.lmer)
+```
+````

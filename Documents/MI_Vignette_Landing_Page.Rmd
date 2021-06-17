@@ -1,6 +1,6 @@
 ---
 title: "Multiple Imputation Comparison Analyses"
-date: "Last Updated: June 16, 2021"
+date: "Last Updated: June 17, 2021"
 output: html_document
 ---
 
@@ -15,5 +15,5 @@ Due to a variety of factors, we may encounter large amounts of missingness in ed
 
 # Regression Models
 
-* No COVID-19 Impact
-* COVID-19 Impact
+* [No COVID-19 Impact](https://centerforassessment.github.io/Internship_2021/articles/MI_Comparison_Regression.html)
+* [COVID-19 Impact](https://centerforassessment.github.io/Internship_2021/articles/MI_Comparison_Impact_Regression.html)
