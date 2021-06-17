@@ -23,7 +23,7 @@ The following .Rmd files can be rendered together to create an HTML report for a
 
 # Regression Models
 
-* [MI Regression Model Source Code](https://centerforassessment.github.io/Internship_2021/articles/MI_Regression_Source_Code.html)
+* [MI Regression Model Source Code](https://centerforassessment.github.io/Internship_2021/articles/MI_Regressions_Source_Code.html)
 
 # Markdown and R Resources
 
