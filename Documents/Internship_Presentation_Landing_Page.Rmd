@@ -7,17 +7,19 @@ output:
     toc_depth: 1
 ---
 
-# June 4th, 2021
+# June 4th
 
 The first presentation summarizes initial work on multiple imputation (MI) comparisons for calculating "adjusted" aggregate summary statistics. 
 
 * <a href="https://centerforassessment.github.io/Internship_2021/articles/CFA-Internship-Presentation_20210604.pdf" target="_blank">PDF Presentation Slides</a>
 
 
-# June 18th Internship Update
+# June 18th
 
 The second presentation provides an overview of recent work on multiple imputation and propensity score weighting.
 
 * <a href="https://centerforassessment.github.io/Internship_2021/articles/CFA-Internship-Presentation_20210618.pdf" target="_blank">PDF Presentation Slides</a>
 
-# July 7th Internship Update
+# July 2nd
+
+Presentation slides coming soon!
