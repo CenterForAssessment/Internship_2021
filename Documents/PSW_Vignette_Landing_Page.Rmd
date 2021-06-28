@@ -1,6 +1,6 @@
 ---
 title: "Propensity Score Weighting Analyses"
-date: "Last Updated: June 16, 2021"
+date: "Last Updated: June 28, 2021"
 output: html_document
 ---
 
@@ -10,8 +10,12 @@ Enrollment changes and other factors may lead to samples with substantially diff
 
 # Introductory Vignette
 
-* [Propensity Score Weighting for Cross-Sectional Analyses](https://centerforassessment.github.io/Internship_2021/articles/PSW_Example.html)
+* [Propensity score weighting for cross-sectional analyses](https://centerforassessment.github.io/Internship_2021/articles/PSW_Example.html)
 
 # Application to Multilevel Data
 
-* [Propensity Score Weighting with Multilevel Data](https://centerforassessment.github.io/Internship_2021/articles/PSW_Multilevel_Example.html)
+* [Propensity score weighting with multilevel data](https://centerforassessment.github.io/Internship_2021/articles/PSW_Multilevel_Example.html)
+
+# Simulation
+
+* [Simulation comparing propensity score weighting and Ho's (2021) Fair Trend metric](https://centerforassessment.github.io/Internship_2021/articles/PSW_Simulation.html)
