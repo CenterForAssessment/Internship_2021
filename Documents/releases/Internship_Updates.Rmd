@@ -31,4 +31,10 @@ There have been numerous exciting developments over the past couple weeks!
 * Began setting up a [personal GitHub-hosted website](https://alliecooperman.github.io/). 
 * Presentation slides for the second internship update can be found [here](https://centerforassessment.github.io/Internship_2021/articles/Internship_Presentation_Landing_Page.html).
 
-# July 7th Internship Update
+# July 2nd Internship Update
+
+It is hard to believe that the internship is wrapping up! 
+
+* Designed a small-scale simulation to examine the efficacy of propensity score weighting for educational assessment data.
+* Drafted a dynamic R Markdown file to run propensity score weighting analyses within reproducible reporting systems.
+* Presentation slides for the third internship update can be found [here](https://centerforassessment.github.io/Internship_2021/articles/Internship_Presentation_Landing_Page.html).
