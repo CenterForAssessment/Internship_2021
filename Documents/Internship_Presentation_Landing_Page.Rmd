@@ -22,4 +22,6 @@ The second presentation provides an overview of recent work on multiple imputati
 
 # July 2nd
 
-Presentation slides coming soon!
+The third presentation continues work on propensity score weighting, as well as reflects on the full internship experience. 
+
+* <a href="https://centerforassessment.github.io/Internship_2021/articles/CFA-Internship-Presentation_20210702.pdf" target="_blank">PDF Presentation Slides</a>
